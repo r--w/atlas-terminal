@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings | Coinpaprika RWA Portfolio Engine</title>
+    <link rel="stylesheet" href="../shared.css">
+    <style>
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .settings-card {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 24px;
+        }
+
+        .settings-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .setting-row:last-child {
+            border-bottom: none;
+        }
+
+        .setting-info {
+            flex: 1;
+        }
+
+        .setting-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--color-text-primary);
+            margin-bottom: 4px;
+        }
+
+        .setting-desc {
+            font-size: 12px;
+            color: var(--color-text-muted);
+        }
+
+        .toggle {
+            width: 48px;
+            height: 24px;
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+        }
+
+        .toggle.active {
+            background: var(--color-accent);
+            border-color: var(--color-accent);
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            transition: all var(--transition-normal);
+        }
+
+        .toggle.active::after {
+            left: 26px;
+        }
+
+        .api-key {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            margin-bottom: 16px;
+        }
+
+        .api-key-value {
+            flex: 1;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--color-text-secondary);
+        }
+
+        .api-key-copy {
+            padding: 6px 12px;
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .api-key-copy:hover {
+            border-color: var(--color-accent);
+            color: var(--color-accent);
+        }
+
+        .api-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .api-stat {
+            text-align: center;
+            padding: 12px;
+            background: var(--color-bg-card);
+            border-radius: var(--radius-sm);
+        }
+
+        .api-stat-value {
+            font-size: 16px;
+            font-weight: 600;
+            font-family: var(--font-mono);
+            color: var(--color-accent);
+        }
+
+        .api-stat-label {
+            font-size: 10px;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="container">
+        <header class="header">
+            <div class="header-left">
+                <a href="../index.html" class="header-logo">
+                    <div class="logo-icon">CP</div>
+                    <div class="logo-text">
+                        <span class="logo-brand">Coinpaprika</span>
+                        <span class="logo-product">RWA Portfolio Engine</span>
+                    </div>
+                </a>
+            </div>
+            <div class="header-search">
+                <input type="text" placeholder="Search RWA tokens, portfolios, analytics...">
+            </div>
+            <div class="header-right">
+                <div class="header-stat">
+                    <span class="header-stat-label">Portfolio Value</span>
+                    <span class="header-stat-value">$10.24M</span>
+                </div>
+                <div class="status-badge">
+                    <div class="status-dot"></div>
+                    <span class="status-text">LIVE</span>
+                </div>
+                <div class="user-avatar">JS</div>
+            </div>
+        </header>
+
+        <nav class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Portfolio</div>
+                <a href="../index.html" class="sidebar-item"><span class="sidebar-item-icon">📊</span>Dashboard</a>
+                <a href="holdings.html" class="sidebar-item"><span class="sidebar-item-icon">💼</span>My Holdings</a>
+                <a href="allocations.html" class="sidebar-item"><span class="sidebar-item-icon">📈</span>Allocations</a>
+                <a href="performance.html" class="sidebar-item"><span class="sidebar-item-icon">⚡</span>Performance</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Analysis</div>
+                <a href="rwa-universe.html" class="sidebar-item"><span class="sidebar-item-icon">🏛️</span>RWA Universe</a>
+                <a href="yield.html" class="sidebar-item"><span class="sidebar-item-icon">💰</span>Yield Compare</a>
+                <a href="settlement.html" class="sidebar-item"><span class="sidebar-item-icon">🔄</span>Settlement</a>
+                <a href="risk.html" class="sidebar-item"><span class="sidebar-item-icon">🛡️</span>Risk Dashboard</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Execution</div>
+                <a href="rebalance.html" class="sidebar-item"><span class="sidebar-item-icon">⚖️</span>Rebalance<span class="sidebar-badge">1</span></a>
+                <a href="orders.html" class="sidebar-item"><span class="sidebar-item-icon">📋</span>Orders</a>
+                <a href="compliance.html" class="sidebar-item"><span class="sidebar-item-icon">✅</span>Compliance</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">System</div>
+                <a href="settings.html" class="sidebar-item active"><span class="sidebar-item-icon">⚙️</span>Settings</a>
+                <a href="alerts.html" class="sidebar-item"><span class="sidebar-item-icon">🔔</span>Alerts<span class="sidebar-badge">3</span></a>
+                <a href="history.html" class="sidebar-item"><span class="sidebar-item-icon">📜</span>History</a>
+            </div>
+            <div class="sidebar-footer">
+                <div class="ai-status">
+                    <div class="ai-status-header">
+                        <span class="ai-status-icon">🤖</span>
+                        <span class="ai-status-title">AI Engine Active</span>
+                    </div>
+                    <div class="ai-status-text">System operational</div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">
+                    <span class="page-title-icon">⚙️</span>
+                    Settings
+                </h1>
+                <p class="page-subtitle">Configure your portfolio engine preferences and API access</p>
+            </div>
+
+            <div class="settings-grid fade-in">
+                <div class="settings-card">
+                    <div class="settings-title">
+                        <span>🔑</span>
+                        API Configuration
+                    </div>
+                    <div class="api-key">
+                        <span class="api-key-value">sk-rwa-••••••••-••••••••-••••••••</span>
+                        <button class="api-key-copy">Copy</button>
+                    </div>
+                    <div class="api-stats">
+                        <div class="api-stat">
+                            <div class="api-stat-value">10K</div>
+                            <div class="api-stat-label">Rate Limit/min</div>
+                        </div>
+                        <div class="api-stat">
+                            <div class="api-stat-value">847</div>
+                            <div class="api-stat-label">Calls Today</div>
+                        </div>
+                        <div class="api-stat">
+                            <div class="api-stat-value">99.9%</div>
+                            <div class="api-stat-label">Uptime</div>
+                        </div>
+                    </div>
+                    <button class="btn" style="width: 100%; margin-top: 16px;">Regenerate API Key</button>
+                </div>
+
+                <div class="settings-card">
+                    <div class="settings-title">
+                        <span>🔔</span>
+                        Notifications
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-name">Rebalance Alerts</div>
+                            <div class="setting-desc">Get notified when rebalancing is recommended</div>
+                        </div>
+                        <div class="toggle active"></div>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-name">Yield Updates</div>
+                            <div class="setting-desc">Daily yield performance summaries</div>
+                        </div>
+                        <div class="toggle active"></div>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-name">Risk Alerts</div>
+                            <div class="setting-desc">Immediate alerts for risk threshold breaches</div>
+                        </div>
+                        <div class="toggle active"></div>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-name">Settlement Updates</div>
+                            <div class="setting-desc">Transaction confirmation notifications</div>
+                        </div>
+                        <div class="toggle"></div>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <div class="settings-title">
+                        <span>🤖</span>
+                        AI Engine Settings
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-name">Auto-Rebalance Suggestions</div>
+                            <div class="setting-desc">Generate AI recommendations automatically</div>
+                        </div>
+                        <div class="toggle active"></div>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-name">Predictive Analytics</div>
+                            <div class="setting-desc">ML-powered yield and risk predictions</div>
+                        </div>
+                        <div class="toggle active"></div>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-name">On-Chain Analysis</div>
+                            <div class="setting-desc">Settlement pattern learning</div>
+                        </div>
+                        <div class="toggle active"></div>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-name">AI Confidence Threshold</div>
+                            <div class="setting-desc">Minimum confidence for recommendations</div>
+                        </div>
+                        <span style="font-family: var(--font-mono); color: var(--color-accent); font-weight: 600;">75%</span>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <div class="settings-title">
+                        <span>🛡️</span>
+                        Security
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-name">Two-Factor Authentication</div>
+                            <div class="setting-desc">Require 2FA for sensitive operations</div>
+                        </div>
+                        <div class="toggle active"></div>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-name">Session Timeout</div>
+                            <div class="setting-desc">Auto-logout after inactivity</div>
+                        </div>
+                        <span style="font-family: var(--font-mono); color: var(--color-text-primary);">30 min</span>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-name">IP Allowlist</div>
+                            <div class="setting-desc">Restrict access to specific IPs</div>
+                        </div>
+                        <div class="toggle"></div>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-name">Audit Logging</div>
+                            <div class="setting-desc">Log all user actions for compliance</div>
+                        </div>
+                        <div class="toggle active"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.querySelectorAll('.toggle').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                this.classList.toggle('active');
+            });
+        });
+    </script>
+</body>
+</html>

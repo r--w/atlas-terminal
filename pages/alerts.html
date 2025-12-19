@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alerts | Coinpaprika RWA Portfolio Engine</title>
+    <link rel="stylesheet" href="../shared.css">
+    <style>
+        .alerts-header {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .alert-filter {
+            padding: 8px 16px;
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .alert-filter:hover,
+        .alert-filter.active {
+            border-color: var(--color-accent);
+            color: var(--color-accent);
+        }
+
+        .alert-filter.active {
+            background: var(--color-accent-dim);
+        }
+
+        .alerts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .alert-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 20px;
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            transition: all var(--transition-fast);
+        }
+
+        .alert-item:hover {
+            border-color: var(--color-border-light);
+        }
+
+        .alert-item.unread {
+            background: var(--color-bg-card);
+            border-left: 3px solid var(--color-accent);
+        }
+
+        .alert-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .alert-icon.warning {
+            background: var(--color-warning-dim);
+        }
+
+        .alert-icon.danger {
+            background: var(--color-danger-dim);
+        }
+
+        .alert-icon.info {
+            background: var(--color-accent-dim);
+        }
+
+        .alert-icon.success {
+            background: var(--color-success-dim);
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-title .badge {
+            font-size: 10px;
+        }
+
+        .alert-desc {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .alert-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 11px;
+            color: var(--color-text-muted);
+        }
+
+        .alert-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .alert-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        .alert-time {
+            font-size: 11px;
+            color: var(--color-text-muted);
+            white-space: nowrap;
+        }
+
+        .alert-actions-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .alert-btn {
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .alert-btn-primary {
+            background: var(--color-accent);
+            border: none;
+            color: white;
+        }
+
+        .alert-btn-primary:hover {
+            background: var(--color-accent-hover);
+        }
+
+        .alert-btn-secondary {
+            background: transparent;
+            border: 1px solid var(--color-border);
+            color: var(--color-text-secondary);
+        }
+
+        .alert-btn-secondary:hover {
+            border-color: var(--color-text-muted);
+            color: var(--color-text-primary);
+        }
+
+        .settings-card {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 24px;
+        }
+
+        .settings-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin-bottom: 20px;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .setting-row:last-child {
+            border-bottom: none;
+        }
+
+        .setting-info {
+            flex: 1;
+        }
+
+        .setting-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--color-text-primary);
+            margin-bottom: 2px;
+        }
+
+        .setting-desc {
+            font-size: 11px;
+            color: var(--color-text-muted);
+        }
+
+        .toggle {
+            width: 44px;
+            height: 22px;
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border);
+            border-radius: 11px;
+            position: relative;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+        }
+
+        .toggle.active {
+            background: var(--color-accent);
+            border-color: var(--color-accent);
+        }
+
+        .toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            transition: all var(--transition-normal);
+        }
+
+        .toggle.active::after {
+            left: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="container">
+        <header class="header">
+            <div class="header-left">
+                <a href="../index.html" class="header-logo">
+                    <div class="logo-icon">CP</div>
+                    <div class="logo-text">
+                        <span class="logo-brand">Coinpaprika</span>
+                        <span class="logo-product">RWA Portfolio Engine</span>
+                    </div>
+                </a>
+            </div>
+            <div class="header-search">
+                <input type="text" placeholder="Search RWA tokens, portfolios, analytics...">
+            </div>
+            <div class="header-right">
+                <div class="header-stat">
+                    <span class="header-stat-label">Portfolio Value</span>
+                    <span class="header-stat-value">$10.24M</span>
+                </div>
+                <div class="status-badge">
+                    <div class="status-dot"></div>
+                    <span class="status-text">LIVE</span>
+                </div>
+                <div class="user-avatar">JS</div>
+            </div>
+        </header>
+
+        <nav class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Portfolio</div>
+                <a href="../index.html" class="sidebar-item"><span class="sidebar-item-icon">📊</span>Dashboard</a>
+                <a href="holdings.html" class="sidebar-item"><span class="sidebar-item-icon">💼</span>My Holdings</a>
+                <a href="allocations.html" class="sidebar-item"><span class="sidebar-item-icon">📈</span>Allocations</a>
+                <a href="performance.html" class="sidebar-item"><span class="sidebar-item-icon">⚡</span>Performance</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Analysis</div>
+                <a href="rwa-universe.html" class="sidebar-item"><span class="sidebar-item-icon">🏛️</span>RWA Universe</a>
+                <a href="yield.html" class="sidebar-item"><span class="sidebar-item-icon">💰</span>Yield Compare</a>
+                <a href="settlement.html" class="sidebar-item"><span class="sidebar-item-icon">🔄</span>Settlement</a>
+                <a href="risk.html" class="sidebar-item"><span class="sidebar-item-icon">🛡️</span>Risk Dashboard</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Execution</div>
+                <a href="rebalance.html" class="sidebar-item"><span class="sidebar-item-icon">⚖️</span>Rebalance<span class="sidebar-badge">1</span></a>
+                <a href="orders.html" class="sidebar-item"><span class="sidebar-item-icon">📋</span>Orders</a>
+                <a href="compliance.html" class="sidebar-item"><span class="sidebar-item-icon">✅</span>Compliance</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">System</div>
+                <a href="settings.html" class="sidebar-item"><span class="sidebar-item-icon">⚙️</span>Settings</a>
+                <a href="alerts.html" class="sidebar-item active"><span class="sidebar-item-icon">🔔</span>Alerts<span class="sidebar-badge">3</span></a>
+                <a href="history.html" class="sidebar-item"><span class="sidebar-item-icon">📜</span>History</a>
+            </div>
+            <div class="sidebar-footer">
+                <div class="ai-status">
+                    <div class="ai-status-header">
+                        <span class="ai-status-icon">🤖</span>
+                        <span class="ai-status-title">AI Engine Active</span>
+                    </div>
+                    <div class="ai-status-text">3 new alerts detected</div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">
+                    <span class="page-title-icon">🔔</span>
+                    Alerts & Notifications
+                </h1>
+                <p class="page-subtitle">Stay informed about portfolio events, risks, and opportunities</p>
+            </div>
+
+            <div class="alerts-header fade-in">
+                <button class="alert-filter active">All Alerts</button>
+                <button class="alert-filter">Unread (3)</button>
+                <button class="alert-filter">Risk</button>
+                <button class="alert-filter">Rebalance</button>
+                <button class="alert-filter">Yield</button>
+                <button class="alert-filter">Compliance</button>
+            </div>
+
+            <div class="grid-3" style="grid-template-columns: 2fr 1fr; gap: 24px;">
+                <div class="alerts-list fade-in" style="animation-delay: 0.1s;">
+                    <div class="alert-item unread">
+                        <div class="alert-icon warning">⚠️</div>
+                        <div class="alert-content">
+                            <div class="alert-title">
+                                Concentration Limit Warning
+                                <span class="badge badge-warning">Risk</span>
+                            </div>
+                            <div class="alert-desc">
+                                OUSG allocation has reached 26.1%, exceeding the 25% single-issuer limit. AI recommends reducing position by $113,240 to return to compliance.
+                            </div>
+                            <div class="alert-meta">
+                                <span class="alert-meta-item">📊 OUSG Position</span>
+                                <span class="alert-meta-item">🎯 Threshold: 25%</span>
+                                <span class="alert-meta-item">📈 Current: 26.1%</span>
+                            </div>
+                        </div>
+                        <div class="alert-actions">
+                            <div class="alert-time">2 hours ago</div>
+                            <div class="alert-actions-btns">
+                                <button class="alert-btn alert-btn-primary">Review</button>
+                                <button class="alert-btn alert-btn-secondary">Dismiss</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert-item unread">
+                        <div class="alert-icon info">💡</div>
+                        <div class="alert-content">
+                            <div class="alert-title">
+                                New High-Yield Opportunity Detected
+                                <span class="badge badge-info">AI Insight</span>
+                            </div>
+                            <div class="alert-desc">
+                                MAPLE:SENIOR is offering 8.2% APY with AA credit rating, 0.9% above your current average yield. AI confidence: 87%. Consider reallocation from lower-yielding positions.
+                            </div>
+                            <div class="alert-meta">
+                                <span class="alert-meta-item">💰 Yield: 8.2% APY</span>
+                                <span class="alert-meta-item">⭐ Rating: AA</span>
+                                <span class="alert-meta-item">🤖 Confidence: 87%</span>
+                            </div>
+                        </div>
+                        <div class="alert-actions">
+                            <div class="alert-time">5 hours ago</div>
+                            <div class="alert-actions-btns">
+                                <button class="alert-btn alert-btn-primary">Analyze</button>
+                                <button class="alert-btn alert-btn-secondary">Dismiss</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert-item unread">
+                        <div class="alert-icon success">✅</div>
+                        <div class="alert-content">
+                            <div class="alert-title">
+                                Settlement Completed
+                                <span class="badge badge-success">Transaction</span>
+                            </div>
+                            <div class="alert-desc">
+                                Your OUSG buy order #ORD-2025-1847 for 50,000 shares ($2,612,000) has been settled on Ethereum. Transaction confirmed with 35 block confirmations.
+                            </div>
+                            <div class="alert-meta">
+                                <span class="alert-meta-item">⛓️ Ethereum</span>
+                                <span class="alert-meta-item">⏱️ Settlement: 2h 14m</span>
+                                <span class="alert-meta-item">✓ 35 confirmations</span>
+                            </div>
+                        </div>
+                        <div class="alert-actions">
+                            <div class="alert-time">Today 10:22</div>
+                            <div class="alert-actions-btns">
+                                <button class="alert-btn alert-btn-secondary">View Tx</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert-item">
+                        <div class="alert-icon info">📊</div>
+                        <div class="alert-content">
+                            <div class="alert-title">
+                                Weekly Performance Report Ready
+                                <span class="badge badge-info">Report</span>
+                            </div>
+                            <div class="alert-desc">
+                                Your weekly portfolio performance report is ready. Portfolio returned +0.34% this week, outperforming the benchmark by 0.12%. Total yield accrued: $18,420.
+                            </div>
+                            <div class="alert-meta">
+                                <span class="alert-meta-item">📈 Return: +0.34%</span>
+                                <span class="alert-meta-item">💰 Yield: $18,420</span>
+                                <span class="alert-meta-item">🎯 vs Benchmark: +0.12%</span>
+                            </div>
+                        </div>
+                        <div class="alert-actions">
+                            <div class="alert-time">Yesterday</div>
+                            <div class="alert-actions-btns">
+                                <button class="alert-btn alert-btn-primary">View Report</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert-item">
+                        <div class="alert-icon warning">🔄</div>
+                        <div class="alert-content">
+                            <div class="alert-title">
+                                Rebalance Recommendation
+                                <span class="badge badge-warning">Rebalance</span>
+                            </div>
+                            <div class="alert-desc">
+                                AI has detected portfolio drift of 4.2% from target allocation. Recommended rebalance involves 3 trades totaling $892,000 to optimize risk-adjusted returns.
+                            </div>
+                            <div class="alert-meta">
+                                <span class="alert-meta-item">📊 Drift: 4.2%</span>
+                                <span class="alert-meta-item">🔄 Trades: 3</span>
+                                <span class="alert-meta-item">🤖 Impact: +0.08% yield</span>
+                            </div>
+                        </div>
+                        <div class="alert-actions">
+                            <div class="alert-time">Dec 3</div>
+                            <div class="alert-actions-btns">
+                                <button class="alert-btn alert-btn-primary">Review Plan</button>
+                                <button class="alert-btn alert-btn-secondary">Dismiss</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert-item">
+                        <div class="alert-icon success">🏛️</div>
+                        <div class="alert-content">
+                            <div class="alert-title">
+                                Compliance Check Passed
+                                <span class="badge badge-success">Compliance</span>
+                            </div>
+                            <div class="alert-desc">
+                                Monthly MiCA compliance audit completed successfully. All holdings verified compliant with EU regulatory requirements. Next audit scheduled for Jan 1, 2026.
+                            </div>
+                            <div class="alert-meta">
+                                <span class="alert-meta-item">🇪🇺 MiCA Status: Compliant</span>
+                                <span class="alert-meta-item">✓ All checks passed</span>
+                            </div>
+                        </div>
+                        <div class="alert-actions">
+                            <div class="alert-time">Dec 1</div>
+                            <div class="alert-actions-btns">
+                                <button class="alert-btn alert-btn-secondary">View Details</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert-item">
+                        <div class="alert-icon danger">⚡</div>
+                        <div class="alert-content">
+                            <div class="alert-title">
+                                Yield Drop Alert - FOBXX
+                                <span class="badge badge-danger">Yield</span>
+                            </div>
+                            <div class="alert-desc">
+                                FOBXX yield has decreased from 4.95% to 4.82% APY (-0.13%). This is within normal variance but below your 5% target threshold. Consider alternative money market positions.
+                            </div>
+                            <div class="alert-meta">
+                                <span class="alert-meta-item">📉 Yield: 4.82% APY</span>
+                                <span class="alert-meta-item">🎯 Target: 5.0%</span>
+                                <span class="alert-meta-item">↓ Change: -0.13%</span>
+                            </div>
+                        </div>
+                        <div class="alert-actions">
+                            <div class="alert-time">Nov 28</div>
+                            <div class="alert-actions-btns">
+                                <button class="alert-btn alert-btn-secondary">Analyze</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-card fade-in" style="animation-delay: 0.2s; height: fit-content;">
+                    <div class="settings-title">Alert Preferences</div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-name">Risk Alerts</div>
+                            <div class="setting-desc">Concentration & exposure warnings</div>
+                        </div>
+                        <div class="toggle active"></div>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-name">Yield Opportunities</div>
+                            <div class="setting-desc">AI-detected yield improvements</div>
+                        </div>
+                        <div class="toggle active"></div>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-name">Rebalance Suggestions</div>
+                            <div class="setting-desc">Portfolio optimization alerts</div>
+                        </div>
+                        <div class="toggle active"></div>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-name">Settlement Updates</div>
+                            <div class="setting-desc">Transaction confirmations</div>
+                        </div>
+                        <div class="toggle active"></div>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-name">Compliance Alerts</div>
+                            <div class="setting-desc">Regulatory status changes</div>
+                        </div>
+                        <div class="toggle active"></div>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-name">Weekly Reports</div>
+                            <div class="setting-desc">Performance summaries</div>
+                        </div>
+                        <div class="toggle active"></div>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <div class="setting-name">Email Notifications</div>
+                            <div class="setting-desc">Send alerts to email</div>
+                        </div>
+                        <div class="toggle"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.querySelectorAll('.alert-filter').forEach(filter => {
+            filter.addEventListener('click', function() {
+                document.querySelectorAll('.alert-filter').forEach(f => f.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.toggle').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                this.classList.toggle('active');
+            });
+        });
+    </script>
+</body>
+</html>

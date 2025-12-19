@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Allocations | Coinpaprika RWA Portfolio Engine</title>
+    <link rel="stylesheet" href="../shared.css">
+    <style>
+        .allocation-overview {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .pie-chart-container {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .pie-chart {
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: conic-gradient(
+                #10b981 0deg 198deg,
+                #3b82f6 198deg 238deg,
+                #8b5cf6 238deg 310deg,
+                #f59e0b 310deg 360deg
+            );
+            position: relative;
+            box-shadow: 0 0 40px rgba(0, 212, 170, 0.2);
+        }
+
+        .pie-chart::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            background: var(--color-bg-secondary);
+            border-radius: 50%;
+        }
+
+        .pie-chart::after {
+            content: '$10.24M';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--color-text-primary);
+        }
+
+        .pie-legend {
+            flex: 1;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .legend-item:last-child {
+            border-bottom: none;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+
+        .legend-info {
+            flex: 1;
+        }
+
+        .legend-label {
+            font-size: 13px;
+            color: var(--color-text-primary);
+            font-weight: 500;
+        }
+
+        .legend-value {
+            font-size: 11px;
+            color: var(--color-text-muted);
+        }
+
+        .legend-pct {
+            font-size: 16px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--color-accent);
+        }
+
+        .drift-analysis {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 24px;
+        }
+
+        .drift-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .drift-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+
+        .drift-item {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .drift-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .drift-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .drift-item-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+
+        .drift-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .drift-status.on-target {
+            background: var(--color-success-dim);
+            color: var(--color-success);
+        }
+
+        .drift-status.underweight {
+            background: var(--color-info-dim);
+            color: var(--color-info);
+        }
+
+        .drift-status.overweight {
+            background: var(--color-warning-dim);
+            color: var(--color-warning);
+        }
+
+        .drift-bars {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .drift-bar-group {
+            flex: 1;
+        }
+
+        .drift-bar-label {
+            font-size: 10px;
+            color: var(--color-text-muted);
+            margin-bottom: 4px;
+        }
+
+        .drift-bar-track {
+            height: 24px;
+            background: var(--color-bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .drift-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            color: white;
+            transition: width 1s ease;
+        }
+
+        .drift-bar-fill.target {
+            background: var(--color-border-light);
+            color: var(--color-text-secondary);
+        }
+
+        .drift-bar-fill.current {
+            background: linear-gradient(90deg, var(--color-accent) 0%, #00a080 100%);
+        }
+
+        .drift-bar-fill.underweight {
+            background: linear-gradient(90deg, var(--color-info) 0%, #2563eb 100%);
+        }
+
+        .drift-bar-fill.overweight {
+            background: linear-gradient(90deg, var(--color-warning) 0%, #d97706 100%);
+        }
+
+        .drift-metrics {
+            display: flex;
+            gap: 24px;
+            font-size: 12px;
+        }
+
+        .drift-metric {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .drift-metric-label {
+            color: var(--color-text-muted);
+        }
+
+        .drift-metric-value {
+            font-weight: 600;
+            font-family: var(--font-mono);
+        }
+
+        .target-editor {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            margin-top: 24px;
+        }
+
+        .target-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .target-row:last-of-type {
+            border-bottom: none;
+        }
+
+        .target-category {
+            width: 200px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .target-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        .target-name {
+            font-size: 13px;
+            color: var(--color-text-primary);
+        }
+
+        .target-slider {
+            flex: 1;
+            height: 8px;
+            background: var(--color-bg-tertiary);
+            border-radius: 4px;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .target-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--color-accent);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--color-accent-glow);
+        }
+
+        .target-value {
+            width: 80px;
+            text-align: right;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: var(--font-mono);
+            color: var(--color-accent);
+        }
+
+        .rebalance-preview {
+            background: linear-gradient(135deg, var(--color-accent-dim) 0%, var(--color-purple-dim) 100%);
+            border: 1px solid var(--color-accent);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            margin-top: 24px;
+        }
+
+        .rebalance-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .rebalance-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rebalance-trades {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .trade-card {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+        }
+
+        .trade-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .trade-type {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .trade-type.buy {
+            background: var(--color-success-dim);
+            color: var(--color-success);
+        }
+
+        .trade-type.sell {
+            background: var(--color-danger-dim);
+            color: var(--color-danger);
+        }
+
+        .trade-asset {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+
+        .trade-details {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+        }
+
+        .trade-amount {
+            font-size: 18px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            margin-top: 8px;
+        }
+
+        .trade-amount.buy { color: var(--color-success); }
+        .trade-amount.sell { color: var(--color-danger); }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="container">
+        <header class="header">
+            <div class="header-left">
+                <a href="../index.html" class="header-logo">
+                    <div class="logo-icon">CP</div>
+                    <div class="logo-text">
+                        <span class="logo-brand">Coinpaprika</span>
+                        <span class="logo-product">RWA Portfolio Engine</span>
+                    </div>
+                </a>
+            </div>
+            <div class="header-search">
+                <input type="text" placeholder="Search RWA tokens, portfolios, analytics...">
+            </div>
+            <div class="header-right">
+                <div class="header-stat">
+                    <span class="header-stat-label">Portfolio Value</span>
+                    <span class="header-stat-value">$10.24M</span>
+                </div>
+                <div class="status-badge">
+                    <div class="status-dot"></div>
+                    <span class="status-text">LIVE</span>
+                </div>
+                <div class="user-avatar">JS</div>
+            </div>
+        </header>
+
+        <nav class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Portfolio</div>
+                <a href="../index.html" class="sidebar-item"><span class="sidebar-item-icon">📊</span>Dashboard</a>
+                <a href="holdings.html" class="sidebar-item"><span class="sidebar-item-icon">💼</span>My Holdings</a>
+                <a href="allocations.html" class="sidebar-item active"><span class="sidebar-item-icon">📈</span>Allocations</a>
+                <a href="performance.html" class="sidebar-item"><span class="sidebar-item-icon">⚡</span>Performance</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Analysis</div>
+                <a href="rwa-universe.html" class="sidebar-item"><span class="sidebar-item-icon">🏛️</span>RWA Universe</a>
+                <a href="yield.html" class="sidebar-item"><span class="sidebar-item-icon">💰</span>Yield Compare</a>
+                <a href="settlement.html" class="sidebar-item"><span class="sidebar-item-icon">🔄</span>Settlement</a>
+                <a href="risk.html" class="sidebar-item"><span class="sidebar-item-icon">🛡️</span>Risk Dashboard</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Execution</div>
+                <a href="rebalance.html" class="sidebar-item"><span class="sidebar-item-icon">⚖️</span>Rebalance<span class="sidebar-badge">1</span></a>
+                <a href="orders.html" class="sidebar-item"><span class="sidebar-item-icon">📋</span>Orders</a>
+                <a href="compliance.html" class="sidebar-item"><span class="sidebar-item-icon">✅</span>Compliance</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">System</div>
+                <a href="settings.html" class="sidebar-item"><span class="sidebar-item-icon">⚙️</span>Settings</a>
+                <a href="alerts.html" class="sidebar-item"><span class="sidebar-item-icon">🔔</span>Alerts<span class="sidebar-badge">3</span></a>
+                <a href="history.html" class="sidebar-item"><span class="sidebar-item-icon">📜</span>History</a>
+            </div>
+            <div class="sidebar-footer">
+                <div class="ai-status">
+                    <div class="ai-status-header">
+                        <span class="ai-status-icon">🤖</span>
+                        <span class="ai-status-title">AI Engine Active</span>
+                    </div>
+                    <div class="ai-status-text">Optimizing allocation targets...</div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">
+                    <span class="page-title-icon">📈</span>
+                    Allocation Targets & Drift Analysis
+                </h1>
+                <p class="page-subtitle">Monitor and adjust your portfolio allocation strategy with AI-powered optimization</p>
+            </div>
+
+            <div class="allocation-overview fade-in">
+                <div class="pie-chart-container">
+                    <div class="pie-chart"></div>
+                    <div class="pie-legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #10b981;"></div>
+                            <div class="legend-info">
+                                <div class="legend-label">Treasury Funds</div>
+                                <div class="legend-value">OUSG, FOBXX</div>
+                            </div>
+                            <div class="legend-pct">55%</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #3b82f6;"></div>
+                            <div class="legend-info">
+                                <div class="legend-label">Corporate Bonds</div>
+                                <div class="legend-value">USDY</div>
+                            </div>
+                            <div class="legend-pct">11%</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #8b5cf6;"></div>
+                            <div class="legend-info">
+                                <div class="legend-label">Credit/Repo</div>
+                                <div class="legend-value">LEND:REPO</div>
+                            </div>
+                            <div class="legend-pct">20%</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #f59e0b;"></div>
+                            <div class="legend-info">
+                                <div class="legend-label">Real Estate</div>
+                                <div class="legend-value">REAL:NY</div>
+                            </div>
+                            <div class="legend-pct">12%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="drift-analysis">
+                    <div class="drift-header">
+                        <div class="drift-title">Drift Analysis</div>
+                        <span class="badge badge-warning">2 Categories Drifted</span>
+                    </div>
+
+                    <div class="drift-item">
+                        <div class="drift-item-header">
+                            <div class="drift-item-title">Treasury Funds</div>
+                            <div class="drift-status underweight">UNDERWEIGHT -5%</div>
+                        </div>
+                        <div class="drift-bars">
+                            <div class="drift-bar-group">
+                                <div class="drift-bar-label">Target</div>
+                                <div class="drift-bar-track">
+                                    <div class="drift-bar-fill target" style="width: 60%;">60%</div>
+                                </div>
+                            </div>
+                            <div class="drift-bar-group">
+                                <div class="drift-bar-label">Current</div>
+                                <div class="drift-bar-track">
+                                    <div class="drift-bar-fill underweight" style="width: 55%;">55%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="drift-metrics">
+                            <div class="drift-metric">
+                                <span class="drift-metric-label">Drift:</span>
+                                <span class="drift-metric-value" style="color: var(--color-info);">-5.0%</span>
+                            </div>
+                            <div class="drift-metric">
+                                <span class="drift-metric-label">Action:</span>
+                                <span class="drift-metric-value" style="color: var(--color-success);">Buy $512K</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="drift-item">
+                        <div class="drift-item-header">
+                            <div class="drift-item-title">Corporate Bonds</div>
+                            <div class="drift-status overweight">OVERWEIGHT +3%</div>
+                        </div>
+                        <div class="drift-bars">
+                            <div class="drift-bar-group">
+                                <div class="drift-bar-label">Target</div>
+                                <div class="drift-bar-track">
+                                    <div class="drift-bar-fill target" style="width: 8%;">8%</div>
+                                </div>
+                            </div>
+                            <div class="drift-bar-group">
+                                <div class="drift-bar-label">Current</div>
+                                <div class="drift-bar-track">
+                                    <div class="drift-bar-fill overweight" style="width: 11%;">11%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="drift-metrics">
+                            <div class="drift-metric">
+                                <span class="drift-metric-label">Drift:</span>
+                                <span class="drift-metric-value" style="color: var(--color-warning);">+3.0%</span>
+                            </div>
+                            <div class="drift-metric">
+                                <span class="drift-metric-label">Action:</span>
+                                <span class="drift-metric-value" style="color: var(--color-danger);">Sell $307K</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="drift-item">
+                        <div class="drift-item-header">
+                            <div class="drift-item-title">Credit/Repo</div>
+                            <div class="drift-status on-target">ON TARGET</div>
+                        </div>
+                        <div class="drift-bars">
+                            <div class="drift-bar-group">
+                                <div class="drift-bar-label">Target</div>
+                                <div class="drift-bar-track">
+                                    <div class="drift-bar-fill target" style="width: 20%;">20%</div>
+                                </div>
+                            </div>
+                            <div class="drift-bar-group">
+                                <div class="drift-bar-label">Current</div>
+                                <div class="drift-bar-track">
+                                    <div class="drift-bar-fill current" style="width: 20%;">20%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="drift-metrics">
+                            <div class="drift-metric">
+                                <span class="drift-metric-label">Drift:</span>
+                                <span class="drift-metric-value" style="color: var(--color-success);">0.0%</span>
+                            </div>
+                            <div class="drift-metric">
+                                <span class="drift-metric-label">Action:</span>
+                                <span class="drift-metric-value">None required</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="target-editor card fade-in" style="animation-delay: 0.2s;">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="card-title-icon">🎯</span>
+                        Allocation Targets
+                    </div>
+                    <button class="btn btn-sm">Apply AI Suggestion</button>
+                </div>
+                <div class="card-body">
+                    <div class="target-row">
+                        <div class="target-category">
+                            <div class="target-color" style="background: #10b981;"></div>
+                            <span class="target-name">Treasury Funds</span>
+                        </div>
+                        <input type="range" class="target-slider" min="0" max="100" value="60">
+                        <div class="target-value">60%</div>
+                    </div>
+                    <div class="target-row">
+                        <div class="target-category">
+                            <div class="target-color" style="background: #3b82f6;"></div>
+                            <span class="target-name">Corporate Bonds</span>
+                        </div>
+                        <input type="range" class="target-slider" min="0" max="100" value="8">
+                        <div class="target-value">8%</div>
+                    </div>
+                    <div class="target-row">
+                        <div class="target-category">
+                            <div class="target-color" style="background: #8b5cf6;"></div>
+                            <span class="target-name">Credit/Repo</span>
+                        </div>
+                        <input type="range" class="target-slider" min="0" max="100" value="20">
+                        <div class="target-value">20%</div>
+                    </div>
+                    <div class="target-row">
+                        <div class="target-category">
+                            <div class="target-color" style="background: #f59e0b;"></div>
+                            <span class="target-name">Real Estate</span>
+                        </div>
+                        <input type="range" class="target-slider" min="0" max="100" value="12">
+                        <div class="target-value">12%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rebalance-preview fade-in" style="animation-delay: 0.3s;">
+                <div class="rebalance-header">
+                    <div class="rebalance-title">
+                        <span>🤖</span>
+                        AI-Recommended Rebalance Trades
+                    </div>
+                    <button class="btn">Execute All Trades</button>
+                </div>
+                <div class="rebalance-trades">
+                    <div class="trade-card">
+                        <div class="trade-header">
+                            <span class="trade-type sell">Sell</span>
+                            <span class="trade-asset">USDY (Corporate Bonds)</span>
+                        </div>
+                        <div class="trade-details">Reduce overweight position by $307K</div>
+                        <div class="trade-amount sell">-$307,000</div>
+                    </div>
+                    <div class="trade-card">
+                        <div class="trade-header">
+                            <span class="trade-type buy">Buy</span>
+                            <span class="trade-asset">OUSG (Treasury)</span>
+                        </div>
+                        <div class="trade-details">Increase treasury allocation</div>
+                        <div class="trade-amount buy">+$512,000</div>
+                    </div>
+                    <div class="trade-card">
+                        <div class="trade-header">
+                            <span class="trade-type sell">Sell</span>
+                            <span class="trade-asset">REAL:NY (Real Estate)</span>
+                        </div>
+                        <div class="trade-details">Reduce exposure due to liquidity risk</div>
+                        <div class="trade-amount sell">-$205,000</div>
+                    </div>
+                    <div class="trade-card">
+                        <div class="trade-header">
+                            <span class="trade-type buy">Buy</span>
+                            <span class="trade-asset">FOBXX (Money Market)</span>
+                        </div>
+                        <div class="trade-details">Maintain treasury target</div>
+                        <div class="trade-amount buy">+$0</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Slider interactions
+        document.querySelectorAll('.target-slider').forEach(slider => {
+            const valueDisplay = slider.nextElementSibling;
+            slider.addEventListener('input', function() {
+                valueDisplay.textContent = this.value + '%';
+            });
+        });
+    </script>
+</body>
+</html>

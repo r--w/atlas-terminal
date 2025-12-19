@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History | Coinpaprika RWA Portfolio Engine</title>
+    <link rel="stylesheet" href="../shared.css">
+    <style>
+        .history-filters {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-label {
+            font-size: 12px;
+            color: var(--color-text-muted);
+        }
+
+        .filter-select {
+            padding: 8px 12px;
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            color: var(--color-text-primary);
+            cursor: pointer;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--color-accent);
+        }
+
+        .history-timeline {
+            position: relative;
+            padding-left: 32px;
+        }
+
+        .history-timeline::before {
+            content: '';
+            position: absolute;
+            left: 12px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, var(--color-accent) 0%, var(--color-border) 100%);
+        }
+
+        .history-day {
+            margin-bottom: 32px;
+        }
+
+        .history-date {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .history-date::before {
+            content: '';
+            position: absolute;
+            left: -26px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 10px;
+            height: 10px;
+            background: var(--color-accent);
+            border-radius: 50%;
+            border: 2px solid var(--color-bg-primary);
+        }
+
+        .history-events {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .history-event {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 16px 20px;
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            position: relative;
+            transition: all var(--transition-fast);
+        }
+
+        .history-event:hover {
+            border-color: var(--color-border-light);
+            transform: translateX(4px);
+        }
+
+        .history-event::before {
+            content: '';
+            position: absolute;
+            left: -26px;
+            top: 24px;
+            width: 6px;
+            height: 6px;
+            background: var(--color-text-muted);
+            border-radius: 50%;
+        }
+
+        .event-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .event-icon.buy { background: var(--color-success-dim); }
+        .event-icon.sell { background: var(--color-danger-dim); }
+        .event-icon.yield { background: var(--color-warning-dim); }
+        .event-icon.rebalance { background: var(--color-accent-dim); }
+        .event-icon.deposit { background: var(--color-success-dim); }
+        .event-icon.withdraw { background: var(--color-danger-dim); }
+        .event-icon.system { background: var(--color-bg-tertiary); }
+
+        .event-content {
+            flex: 1;
+        }
+
+        .event-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--color-text-primary);
+            margin-bottom: 4px;
+        }
+
+        .event-desc {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .event-details {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .event-detail {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: var(--color-text-muted);
+        }
+
+        .event-detail-value {
+            font-family: var(--font-mono);
+            color: var(--color-text-secondary);
+        }
+
+        .event-meta {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .event-time {
+            font-size: 11px;
+            color: var(--color-text-muted);
+        }
+
+        .event-amount {
+            font-size: 14px;
+            font-weight: 600;
+            font-family: var(--font-mono);
+        }
+
+        .event-amount.positive { color: var(--color-success); }
+        .event-amount.negative { color: var(--color-danger); }
+        .event-amount.neutral { color: var(--color-text-primary); }
+
+        .event-tx {
+            font-size: 10px;
+            font-family: var(--font-mono);
+            color: var(--color-accent);
+            cursor: pointer;
+        }
+
+        .event-tx:hover {
+            text-decoration: underline;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .history-stat {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 20px;
+        }
+
+        .history-stat-label {
+            font-size: 11px;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .history-stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--color-text-primary);
+        }
+
+        .history-stat-sub {
+            font-size: 11px;
+            color: var(--color-text-muted);
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="container">
+        <header class="header">
+            <div class="header-left">
+                <a href="../index.html" class="header-logo">
+                    <div class="logo-icon">CP</div>
+                    <div class="logo-text">
+                        <span class="logo-brand">Coinpaprika</span>
+                        <span class="logo-product">RWA Portfolio Engine</span>
+                    </div>
+                </a>
+            </div>
+            <div class="header-search">
+                <input type="text" placeholder="Search RWA tokens, portfolios, analytics...">
+            </div>
+            <div class="header-right">
+                <div class="header-stat">
+                    <span class="header-stat-label">Portfolio Value</span>
+                    <span class="header-stat-value">$10.24M</span>
+                </div>
+                <div class="status-badge">
+                    <div class="status-dot"></div>
+                    <span class="status-text">LIVE</span>
+                </div>
+                <div class="user-avatar">JS</div>
+            </div>
+        </header>
+
+        <nav class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Portfolio</div>
+                <a href="../index.html" class="sidebar-item"><span class="sidebar-item-icon">📊</span>Dashboard</a>
+                <a href="holdings.html" class="sidebar-item"><span class="sidebar-item-icon">💼</span>My Holdings</a>
+                <a href="allocations.html" class="sidebar-item"><span class="sidebar-item-icon">📈</span>Allocations</a>
+                <a href="performance.html" class="sidebar-item"><span class="sidebar-item-icon">⚡</span>Performance</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Analysis</div>
+                <a href="rwa-universe.html" class="sidebar-item"><span class="sidebar-item-icon">🏛️</span>RWA Universe</a>
+                <a href="yield.html" class="sidebar-item"><span class="sidebar-item-icon">💰</span>Yield Compare</a>
+                <a href="settlement.html" class="sidebar-item"><span class="sidebar-item-icon">🔄</span>Settlement</a>
+                <a href="risk.html" class="sidebar-item"><span class="sidebar-item-icon">🛡️</span>Risk Dashboard</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Execution</div>
+                <a href="rebalance.html" class="sidebar-item"><span class="sidebar-item-icon">⚖️</span>Rebalance<span class="sidebar-badge">1</span></a>
+                <a href="orders.html" class="sidebar-item"><span class="sidebar-item-icon">📋</span>Orders</a>
+                <a href="compliance.html" class="sidebar-item"><span class="sidebar-item-icon">✅</span>Compliance</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">System</div>
+                <a href="settings.html" class="sidebar-item"><span class="sidebar-item-icon">⚙️</span>Settings</a>
+                <a href="alerts.html" class="sidebar-item"><span class="sidebar-item-icon">🔔</span>Alerts<span class="sidebar-badge">3</span></a>
+                <a href="history.html" class="sidebar-item active"><span class="sidebar-item-icon">📜</span>History</a>
+            </div>
+            <div class="sidebar-footer">
+                <div class="ai-status">
+                    <div class="ai-status-header">
+                        <span class="ai-status-icon">🤖</span>
+                        <span class="ai-status-title">AI Engine Active</span>
+                    </div>
+                    <div class="ai-status-text">Logging all activity</div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">
+                    <span class="page-title-icon">📜</span>
+                    Transaction History
+                </h1>
+                <p class="page-subtitle">Complete audit trail of all portfolio activity</p>
+            </div>
+
+            <div class="stats-row fade-in">
+                <div class="history-stat">
+                    <div class="history-stat-label">Total Transactions</div>
+                    <div class="history-stat-value">47</div>
+                    <div class="history-stat-sub">Last 90 days</div>
+                </div>
+                <div class="history-stat">
+                    <div class="history-stat-label">Total Volume</div>
+                    <div class="history-stat-value">$12.8M</div>
+                    <div class="history-stat-sub">Buys: $11.2M / Sells: $1.6M</div>
+                </div>
+                <div class="history-stat">
+                    <div class="history-stat-label">Yield Collected</div>
+                    <div class="history-stat-value">$142,680</div>
+                    <div class="history-stat-sub">Avg $47,560/month</div>
+                </div>
+                <div class="history-stat">
+                    <div class="history-stat-label">Gas Fees Paid</div>
+                    <div class="history-stat-value">$847</div>
+                    <div class="history-stat-sub">0.007% of volume</div>
+                </div>
+            </div>
+
+            <div class="history-filters fade-in" style="animation-delay: 0.1s;">
+                <div class="filter-group">
+                    <span class="filter-label">Type:</span>
+                    <select class="filter-select">
+                        <option>All Types</option>
+                        <option>Buys</option>
+                        <option>Sells</option>
+                        <option>Yield</option>
+                        <option>Rebalance</option>
+                        <option>Deposits</option>
+                        <option>Withdrawals</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">Asset:</span>
+                    <select class="filter-select">
+                        <option>All Assets</option>
+                        <option>OUSG</option>
+                        <option>FOBXX</option>
+                        <option>USDY</option>
+                        <option>REAL:NY</option>
+                        <option>LEND:REPO</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">Period:</span>
+                    <select class="filter-select">
+                        <option>Last 30 days</option>
+                        <option>Last 90 days</option>
+                        <option>Last 6 months</option>
+                        <option>Year to date</option>
+                        <option>All time</option>
+                    </select>
+                </div>
+                <div class="filter-group" style="margin-left: auto;">
+                    <button class="btn btn-sm btn-secondary">Export CSV</button>
+                    <button class="btn btn-sm btn-secondary">Export PDF</button>
+                </div>
+            </div>
+
+            <div class="history-timeline fade-in" style="animation-delay: 0.2s;">
+                <div class="history-day">
+                    <div class="history-date">December 5, 2025 - Today</div>
+                    <div class="history-events">
+                        <div class="history-event">
+                            <div class="event-icon buy">📈</div>
+                            <div class="event-content">
+                                <div class="event-title">Buy Order Filled - OUSG</div>
+                                <div class="event-desc">Purchased 50,000 shares of Ondo US Government Bond Fund at $52.24/share</div>
+                                <div class="event-details">
+                                    <span class="event-detail">Order: <span class="event-detail-value">#ORD-2025-1847</span></span>
+                                    <span class="event-detail">Chain: <span class="event-detail-value">Ethereum</span></span>
+                                    <span class="event-detail">Settlement: <span class="event-detail-value">2h 14m</span></span>
+                                </div>
+                            </div>
+                            <div class="event-meta">
+                                <div class="event-time">10:22 AM</div>
+                                <div class="event-amount negative">-$2,612,000</div>
+                                <div class="event-tx">0x8f4a...3c21</div>
+                            </div>
+                        </div>
+                        <div class="history-event">
+                            <div class="event-icon yield">💰</div>
+                            <div class="event-content">
+                                <div class="event-title">Yield Distribution - USDY</div>
+                                <div class="event-desc">Daily yield accrual for USDY position (1,036,500 tokens at 5.10% APY)</div>
+                                <div class="event-details">
+                                    <span class="event-detail">Rate: <span class="event-detail-value">5.10% APY</span></span>
+                                    <span class="event-detail">Holdings: <span class="event-detail-value">$1,036,500</span></span>
+                                </div>
+                            </div>
+                            <div class="event-meta">
+                                <div class="event-time">00:00 AM</div>
+                                <div class="event-amount positive">+$144.84</div>
+                            </div>
+                        </div>
+                        <div class="history-event">
+                            <div class="event-icon yield">💰</div>
+                            <div class="event-content">
+                                <div class="event-title">Yield Distribution - FOBXX</div>
+                                <div class="event-desc">Daily yield accrual for FOBXX position (320,000 shares at 4.82% APY)</div>
+                                <div class="event-details">
+                                    <span class="event-detail">Rate: <span class="event-detail-value">4.82% APY</span></span>
+                                    <span class="event-detail">Holdings: <span class="event-detail-value">$3,100,800</span></span>
+                                </div>
+                            </div>
+                            <div class="event-meta">
+                                <div class="event-time">00:00 AM</div>
+                                <div class="event-amount positive">+$409.34</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="history-day">
+                    <div class="history-date">December 4, 2025</div>
+                    <div class="history-events">
+                        <div class="history-event">
+                            <div class="event-icon system">🤖</div>
+                            <div class="event-content">
+                                <div class="event-title">AI Rebalance Analysis Completed</div>
+                                <div class="event-desc">Portfolio drift detected at 4.2%. AI generated optimized rebalancing recommendations with 91% confidence.</div>
+                                <div class="event-details">
+                                    <span class="event-detail">Drift: <span class="event-detail-value">4.2%</span></span>
+                                    <span class="event-detail">Suggested Trades: <span class="event-detail-value">3</span></span>
+                                    <span class="event-detail">Expected Impact: <span class="event-detail-value">+0.08% yield</span></span>
+                                </div>
+                            </div>
+                            <div class="event-meta">
+                                <div class="event-time">3:45 PM</div>
+                                <div class="event-amount neutral">Analysis</div>
+                            </div>
+                        </div>
+                        <div class="history-event">
+                            <div class="event-icon yield">💰</div>
+                            <div class="event-content">
+                                <div class="event-title">Yield Distribution - All Assets</div>
+                                <div class="event-desc">Combined daily yield from all portfolio positions</div>
+                                <div class="event-details">
+                                    <span class="event-detail">OUSG: <span class="event-detail-value">+$375.20</span></span>
+                                    <span class="event-detail">FOBXX: <span class="event-detail-value">+$409.34</span></span>
+                                    <span class="event-detail">USDY: <span class="event-detail-value">+$144.84</span></span>
+                                </div>
+                            </div>
+                            <div class="event-meta">
+                                <div class="event-time">00:00 AM</div>
+                                <div class="event-amount positive">+$929.38</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="history-day">
+                    <div class="history-date">November 28, 2025</div>
+                    <div class="history-events">
+                        <div class="history-event">
+                            <div class="event-icon buy">📈</div>
+                            <div class="event-content">
+                                <div class="event-title">Buy Order Filled - FOBXX</div>
+                                <div class="event-desc">Purchased 320,000 shares of Franklin OnChain US Government Money Fund at $9.69/share</div>
+                                <div class="event-details">
+                                    <span class="event-detail">Order: <span class="event-detail-value">#ORD-2025-1846</span></span>
+                                    <span class="event-detail">Chain: <span class="event-detail-value">Polygon</span></span>
+                                    <span class="event-detail">Settlement: <span class="event-detail-value">45m</span></span>
+                                </div>
+                            </div>
+                            <div class="event-meta">
+                                <div class="event-time">2:45 PM</div>
+                                <div class="event-amount negative">-$3,100,800</div>
+                                <div class="event-tx">0x2a7f...9e12</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="history-day">
+                    <div class="history-date">November 15, 2025</div>
+                    <div class="history-events">
+                        <div class="history-event">
+                            <div class="event-icon buy">📈</div>
+                            <div class="event-content">
+                                <div class="event-title">Buy Order Filled - USDY</div>
+                                <div class="event-desc">Purchased 1,036,500 USDY tokens at $1.00/token (Ondo US Dollar Yield)</div>
+                                <div class="event-details">
+                                    <span class="event-detail">Order: <span class="event-detail-value">#ORD-2025-1845</span></span>
+                                    <span class="event-detail">Chain: <span class="event-detail-value">Ethereum</span></span>
+                                    <span class="event-detail">Settlement: <span class="event-detail-value">3h 22m</span></span>
+                                </div>
+                            </div>
+                            <div class="event-meta">
+                                <div class="event-time">9:30 AM</div>
+                                <div class="event-amount negative">-$1,036,500</div>
+                                <div class="event-tx">0x5c91...a7b3</div>
+                            </div>
+                        </div>
+                        <div class="history-event">
+                            <div class="event-icon deposit">💵</div>
+                            <div class="event-content">
+                                <div class="event-title">USDC Deposit</div>
+                                <div class="event-desc">Deposited USDC from external wallet for USDY purchase</div>
+                                <div class="event-details">
+                                    <span class="event-detail">Source: <span class="event-detail-value">0x7a2b...4f21</span></span>
+                                    <span class="event-detail">Chain: <span class="event-detail-value">Ethereum</span></span>
+                                </div>
+                            </div>
+                            <div class="event-meta">
+                                <div class="event-time">9:15 AM</div>
+                                <div class="event-amount positive">+$1,050,000</div>
+                                <div class="event-tx">0x3d8e...c492</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="history-day">
+                    <div class="history-date">October 20, 2025</div>
+                    <div class="history-events">
+                        <div class="history-event">
+                            <div class="event-icon buy">📈</div>
+                            <div class="event-content">
+                                <div class="event-title">Buy Order Filled - REAL:NY</div>
+                                <div class="event-desc">Purchased 45.32 fractional shares of Manhattan Commercial RE at $27,800/share</div>
+                                <div class="event-details">
+                                    <span class="event-detail">Order: <span class="event-detail-value">#ORD-2025-1844</span></span>
+                                    <span class="event-detail">Chain: <span class="event-detail-value">Ethereum</span></span>
+                                    <span class="event-detail">Property: <span class="event-detail-value">245 Park Ave</span></span>
+                                </div>
+                            </div>
+                            <div class="event-meta">
+                                <div class="event-time">11:15 AM</div>
+                                <div class="event-amount negative">-$1,259,896</div>
+                                <div class="event-tx">0x1b4c...f823</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="history-day">
+                    <div class="history-date">September 1, 2025</div>
+                    <div class="history-events">
+                        <div class="history-event">
+                            <div class="event-icon deposit">💵</div>
+                            <div class="event-content">
+                                <div class="event-title">Initial Portfolio Funding</div>
+                                <div class="event-desc">Initial capital deployment from treasury for RWA portfolio initialization</div>
+                                <div class="event-details">
+                                    <span class="event-detail">Source: <span class="event-detail-value">Corporate Treasury</span></span>
+                                    <span class="event-detail">Chain: <span class="event-detail-value">Multi-chain</span></span>
+                                </div>
+                            </div>
+                            <div class="event-meta">
+                                <div class="event-time">10:00 AM</div>
+                                <div class="event-amount positive">+$10,000,000</div>
+                            </div>
+                        </div>
+                        <div class="history-event">
+                            <div class="event-icon system">⚙️</div>
+                            <div class="event-content">
+                                <div class="event-title">Portfolio Engine Initialized</div>
+                                <div class="event-desc">RWA Portfolio Engine activated with AI optimization enabled and compliance rules configured</div>
+                                <div class="event-details">
+                                    <span class="event-detail">AI Engine: <span class="event-detail-value">Active</span></span>
+                                    <span class="event-detail">Compliance: <span class="event-detail-value">MiCA + US Accredited</span></span>
+                                </div>
+                            </div>
+                            <div class="event-meta">
+                                <div class="event-time">9:00 AM</div>
+                                <div class="event-amount neutral">System</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

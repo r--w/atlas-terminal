@@ -1,0 +1,2163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coinpaprika RWA Portfolio Engine | Decision Layer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-bg-primary: #0a0e14;
+            --color-bg-secondary: #111820;
+            --color-bg-tertiary: #1a2332;
+            --color-bg-card: #151d29;
+            --color-border: #2a3a4d;
+            --color-border-light: #3a4a5d;
+            --color-text-primary: #f0f4f8;
+            --color-text-secondary: #8899a8;
+            --color-text-muted: #5a6a7a;
+            --color-accent: #00d4aa;
+            --color-accent-dim: rgba(0, 212, 170, 0.15);
+            --color-accent-hover: #00e5ba;
+            --color-accent-glow: rgba(0, 212, 170, 0.4);
+            --color-success: #10b981;
+            --color-success-dim: rgba(16, 185, 129, 0.15);
+            --color-warning: #f59e0b;
+            --color-warning-dim: rgba(245, 158, 11, 0.15);
+            --color-danger: #ef4444;
+            --color-danger-dim: rgba(239, 68, 68, 0.15);
+            --color-info: #3b82f6;
+            --color-info-dim: rgba(59, 130, 246, 0.15);
+            --color-purple: #8b5cf6;
+            --color-purple-dim: rgba(139, 92, 246, 0.15);
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Monaco', monospace;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 0 30px var(--color-accent-glow);
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+            --transition-fast: 0.15s ease;
+            --transition-normal: 0.25s ease;
+            --transition-slow: 0.4s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--color-bg-primary);
+            color: var(--color-text-primary);
+            line-height: 1.5;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Animated background gradient */
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(0, 212, 170, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(59, 130, 246, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(139, 92, 246, 0.04) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+            animation: gradientShift 20s ease-in-out infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            grid-template-rows: 64px 1fr;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Header */
+        .header {
+            grid-column: 1 / -1;
+            background: rgba(17, 24, 32, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--color-border);
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--color-accent) 0%, #00a080 100%);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--color-bg-primary);
+            box-shadow: 0 0 20px var(--color-accent-glow);
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-brand {
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            color: var(--color-text-primary);
+        }
+
+        .logo-product {
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--color-accent);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .header-search {
+            flex: 1;
+            max-width: 480px;
+            position: relative;
+        }
+
+        .header-search input {
+            width: 100%;
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 10px 16px 10px 44px;
+            color: var(--color-text-primary);
+            font-size: 13px;
+            font-family: var(--font-sans);
+            transition: all var(--transition-normal);
+        }
+
+        .header-search input:focus {
+            outline: none;
+            border-color: var(--color-accent);
+            box-shadow: 0 0 0 3px var(--color-accent-dim);
+        }
+
+        .header-search input::placeholder {
+            color: var(--color-text-muted);
+        }
+
+        .header-search::before {
+            content: "⌘K";
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+            font-family: var(--font-mono);
+            color: var(--color-text-muted);
+            background: var(--color-bg-card);
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid var(--color-border);
+        }
+
+        .header-search::after {
+            content: "🔍";
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 14px;
+            opacity: 0.5;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            padding: 0 16px;
+            border-right: 1px solid var(--color-border);
+        }
+
+        .header-stat-label {
+            font-size: 10px;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .header-stat-value {
+            font-size: 14px;
+            font-weight: 600;
+            font-family: var(--font-mono);
+            color: var(--color-accent);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--color-success-dim);
+            border: 1px solid var(--color-success);
+            border-radius: 20px;
+            padding: 6px 14px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--color-success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 10px var(--color-success);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.9); }
+        }
+
+        .status-text {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--color-success);
+            letter-spacing: 0.5px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--color-purple) 0%, var(--color-info) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform var(--transition-fast);
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.1);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            grid-column: 1;
+            grid-row: 2;
+            background: rgba(17, 24, 32, 0.8);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--color-border);
+            overflow-y: auto;
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--color-border);
+            border-radius: 2px;
+        }
+
+        .sidebar-section {
+            margin-bottom: 8px;
+        }
+
+        .sidebar-title {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            padding: 12px 20px 8px;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+        }
+
+        .sidebar-item {
+            padding: 12px 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: all var(--transition-normal);
+            color: var(--color-text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            text-decoration: none;
+        }
+
+        .sidebar-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 0;
+            background: linear-gradient(90deg, var(--color-accent-dim) 0%, transparent 100%);
+            transition: width var(--transition-normal);
+        }
+
+        .sidebar-item:hover {
+            color: var(--color-text-primary);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .sidebar-item:hover::before {
+            width: 100%;
+        }
+
+        .sidebar-item.active {
+            border-left-color: var(--color-accent);
+            color: var(--color-accent);
+            background: var(--color-accent-dim);
+        }
+
+        .sidebar-item.active::before {
+            width: 100%;
+        }
+
+        .sidebar-item-icon {
+            width: 18px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .sidebar-badge {
+            margin-left: auto;
+            background: var(--color-danger);
+            color: white;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 10px;
+            animation: badgePulse 2s infinite;
+        }
+
+        @keyframes badgePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 20px;
+            border-top: 1px solid var(--color-border);
+        }
+
+        .ai-status {
+            background: linear-gradient(135deg, var(--color-accent-dim) 0%, var(--color-purple-dim) 100%);
+            border: 1px solid var(--color-accent);
+            border-radius: var(--radius-md);
+            padding: 14px;
+        }
+
+        .ai-status-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .ai-status-icon {
+            font-size: 16px;
+            animation: spin 4s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .ai-status-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--color-accent);
+        }
+
+        .ai-status-text {
+            font-size: 10px;
+            color: var(--color-text-secondary);
+            line-height: 1.4;
+        }
+
+        /* Main Content */
+        .main-content {
+            grid-column: 2;
+            grid-row: 2;
+            background: var(--color-bg-primary);
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            grid-template-rows: 1fr 1fr;
+            gap: 1px;
+            overflow: hidden;
+            padding: 1px;
+        }
+
+        .panel {
+            background: var(--color-bg-secondary);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            margin: 8px;
+            border: 1px solid var(--color-border);
+            transition: border-color var(--transition-normal);
+        }
+
+        .panel:hover {
+            border-color: var(--color-border-light);
+        }
+
+        .panel-header {
+            background: linear-gradient(180deg, var(--color-bg-tertiary) 0%, var(--color-bg-card) 100%);
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: var(--color-text-primary);
+        }
+
+        .panel-title-icon {
+            font-size: 14px;
+        }
+
+        .panel-title-accent {
+            color: var(--color-accent);
+        }
+
+        .panel-meta {
+            font-size: 10px;
+            color: var(--color-text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .panel-meta-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--color-success);
+            border-radius: 50%;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            font-size: 12px;
+        }
+
+        .panel-content::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .panel-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .panel-content::-webkit-scrollbar-thumb {
+            background: var(--color-border);
+            border-radius: 3px;
+        }
+
+        /* AI Recommendations */
+        .rec-container {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .rec-card {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .rec-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--color-accent) 0%, var(--color-info) 100%);
+            transform: scaleX(0);
+            transition: transform var(--transition-normal);
+        }
+
+        .rec-card:hover {
+            border-color: var(--color-accent);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md), 0 0 20px var(--color-accent-dim);
+        }
+
+        .rec-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .rec-card.selected {
+            border-color: var(--color-accent);
+            background: var(--color-accent-dim);
+        }
+
+        .rec-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .rec-title-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .rec-title {
+            font-weight: 600;
+            color: var(--color-text-primary);
+            font-size: 14px;
+        }
+
+        .rec-subtitle {
+            font-size: 11px;
+            color: var(--color-text-muted);
+        }
+
+        .rec-badge {
+            font-size: 10px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            text-transform: uppercase;
+        }
+
+        .rec-badge.strong {
+            background: linear-gradient(135deg, var(--color-success) 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+        }
+
+        .rec-badge.moderate {
+            background: linear-gradient(135deg, var(--color-info) 0%, #2563eb 100%);
+            color: white;
+        }
+
+        .rec-badge.reduce {
+            background: linear-gradient(135deg, var(--color-warning) 0%, #d97706 100%);
+            color: white;
+        }
+
+        .rec-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .rec-metric {
+            text-align: center;
+            padding: 10px;
+            background: var(--color-bg-tertiary);
+            border-radius: var(--radius-sm);
+        }
+
+        .rec-metric-value {
+            font-size: 16px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--color-accent);
+        }
+
+        .rec-metric-label {
+            font-size: 9px;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 2px;
+        }
+
+        .rec-insight {
+            padding: 10px 12px;
+            background: linear-gradient(135deg, var(--color-accent-dim) 0%, transparent 100%);
+            border-left: 2px solid var(--color-accent);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            font-size: 11px;
+            color: var(--color-text-secondary);
+            line-height: 1.4;
+        }
+
+        .rec-insight strong {
+            color: var(--color-accent);
+        }
+
+        /* Confidence Bar */
+        .confidence-bar {
+            margin-top: 12px;
+        }
+
+        .confidence-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .confidence-label {
+            font-size: 10px;
+            color: var(--color-text-muted);
+        }
+
+        .confidence-value {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--color-accent);
+        }
+
+        .confidence-track {
+            height: 4px;
+            background: var(--color-bg-tertiary);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-accent) 0%, var(--color-success) 100%);
+            border-radius: 2px;
+            transition: width 1s ease;
+        }
+
+        /* Portfolio Table */
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 12px;
+        }
+
+        thead {
+            background: var(--color-bg-tertiary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 12px 14px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--color-text-muted);
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        td {
+            padding: 14px;
+            border-bottom: 1px solid var(--color-border);
+            transition: background var(--transition-fast);
+        }
+
+        tbody tr {
+            cursor: pointer;
+        }
+
+        tbody tr:hover td {
+            background: var(--color-bg-tertiary);
+        }
+
+        .ticker-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ticker-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--color-bg-primary);
+        }
+
+        .ticker-icon.treasury { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .ticker-icon.money-market { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+        .ticker-icon.corporate { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .ticker-icon.credit { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+        .ticker-icon.real-estate { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+
+        .ticker-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ticker-symbol {
+            font-family: var(--font-mono);
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+
+        .ticker-name {
+            font-size: 10px;
+            color: var(--color-text-muted);
+        }
+
+        .value-up {
+            color: var(--color-success);
+            font-weight: 500;
+        }
+
+        .value-down {
+            color: var(--color-danger);
+            font-weight: 500;
+        }
+
+        .value-neutral {
+            color: var(--color-text-secondary);
+        }
+
+        .status-cell {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-indicator.live {
+            background: var(--color-success);
+            box-shadow: 0 0 8px var(--color-success);
+        }
+
+        .status-indicator.pending {
+            background: var(--color-warning);
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* Right Panel Stats */
+        .stats-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .stat-card {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            transition: all var(--transition-normal);
+        }
+
+        .stat-card:hover {
+            border-color: var(--color-accent);
+            transform: translateX(-4px);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-trend {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+
+        .stat-trend.up {
+            background: var(--color-success-dim);
+            color: var(--color-success);
+        }
+
+        .stat-trend.down {
+            background: var(--color-danger-dim);
+            color: var(--color-danger);
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--color-text-primary);
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .stat-value.accent {
+            color: var(--color-accent);
+        }
+
+        .stat-sub {
+            font-size: 11px;
+            color: var(--color-text-secondary);
+        }
+
+        /* Mini Chart */
+        .mini-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 40px;
+            margin-top: 12px;
+        }
+
+        .mini-bar {
+            flex: 1;
+            background: linear-gradient(180deg, var(--color-accent) 0%, var(--color-accent-dim) 100%);
+            border-radius: 2px 2px 0 0;
+            transition: all var(--transition-fast);
+            min-height: 4px;
+        }
+
+        .mini-bar:hover {
+            background: var(--color-accent);
+            box-shadow: 0 0 10px var(--color-accent-glow);
+        }
+
+        /* Constraints Section */
+        .constraints-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .constraint-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 14px;
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            transition: all var(--transition-fast);
+        }
+
+        .constraint-item:hover {
+            border-color: var(--color-border-light);
+            background: var(--color-bg-tertiary);
+        }
+
+        .constraint-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .constraint-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .constraint-icon.yield { background: var(--color-success-dim); }
+        .constraint-icon.risk { background: var(--color-danger-dim); }
+        .constraint-icon.credit { background: var(--color-info-dim); }
+        .constraint-icon.time { background: var(--color-purple-dim); }
+
+        .constraint-label {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+        }
+
+        .constraint-value {
+            font-size: 12px;
+            font-weight: 600;
+            font-family: var(--font-mono);
+            color: var(--color-accent);
+        }
+
+        /* Alert Banner */
+        .alert-banner {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px;
+            background: var(--color-danger-dim);
+            border: 1px solid var(--color-danger);
+            border-radius: var(--radius-md);
+            margin-top: 12px;
+        }
+
+        .alert-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--color-danger);
+            margin-bottom: 2px;
+        }
+
+        .alert-text {
+            font-size: 11px;
+            color: var(--color-text-secondary);
+            line-height: 1.4;
+        }
+
+        /* AI Insights Panel */
+        .insights-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .insight-card {
+            padding: 14px;
+            background: linear-gradient(135deg, var(--color-bg-card) 0%, var(--color-bg-tertiary) 100%);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            transition: all var(--transition-normal);
+        }
+
+        .insight-card:hover {
+            border-color: var(--color-accent);
+            transform: translateY(-2px);
+        }
+
+        .insight-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .insight-icon {
+            font-size: 14px;
+        }
+
+        .insight-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--color-accent);
+        }
+
+        .insight-text {
+            font-size: 11px;
+            color: var(--color-text-secondary);
+            line-height: 1.5;
+        }
+
+        .insight-text strong {
+            color: var(--color-text-primary);
+        }
+
+        .insight-metric {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            background: var(--color-accent-dim);
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            font-family: var(--font-mono);
+            color: var(--color-accent);
+            margin-top: 8px;
+        }
+
+        /* Allocation Breakdown */
+        .allocation-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .allocation-item {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+        }
+
+        .allocation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .allocation-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--color-text-secondary);
+        }
+
+        .allocation-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+        }
+
+        .allocation-value {
+            font-size: 12px;
+            font-weight: 600;
+            font-family: var(--font-mono);
+            color: var(--color-text-primary);
+        }
+
+        .allocation-bar {
+            height: 6px;
+            background: var(--color-bg-tertiary);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .allocation-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 1s ease;
+        }
+
+        .allocation-fill.treasury { background: linear-gradient(90deg, #10b981 0%, #059669 100%); }
+        .allocation-fill.bonds { background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%); }
+        .allocation-fill.real-estate { background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%); }
+        .allocation-fill.credit { background: linear-gradient(90deg, #8b5cf6 0%, #7c3aed 100%); }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, var(--color-accent) 0%, #00a080 100%);
+            color: var(--color-bg-primary);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            font-family: var(--font-sans);
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            width: 100%;
+            margin-top: 12px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: var(--color-bg-tertiary);
+            color: var(--color-text-primary);
+            border: 1px solid var(--color-border);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--color-accent);
+            box-shadow: none;
+        }
+
+        /* Rebalance Target */
+        .rebalance-preview {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--color-border);
+        }
+
+        .rebalance-title {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .rebalance-title::before {
+            content: '';
+            display: block;
+            width: 12px;
+            height: 2px;
+            background: var(--color-accent);
+        }
+
+        /* Loading shimmer effect */
+        .shimmer {
+            background: linear-gradient(90deg,
+                var(--color-bg-tertiary) 0%,
+                var(--color-bg-card) 50%,
+                var(--color-bg-tertiary) 100%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 6px 10px;
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            font-size: 10px;
+            color: var(--color-text-primary);
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all var(--transition-fast);
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+            visibility: visible;
+            bottom: calc(100% + 8px);
+        }
+
+        /* Animation Classes */
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide-in-left {
+            animation: slideInLeft 0.4s ease forwards;
+        }
+
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Live Ticker */
+        .live-ticker {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--color-bg-tertiary);
+            border-radius: var(--radius-sm);
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+
+        .ticker-label {
+            font-size: 9px;
+            font-weight: 600;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+
+        .ticker-track {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .ticker-content {
+            display: flex;
+            gap: 24px;
+            animation: tickerScroll 30s linear infinite;
+        }
+
+        @keyframes tickerScroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .ticker-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            font-size: 11px;
+        }
+
+        .ticker-symbol {
+            font-weight: 600;
+            color: var(--color-accent);
+            font-family: var(--font-mono);
+        }
+
+        .ticker-price {
+            color: var(--color-text-secondary);
+        }
+
+        .ticker-change {
+            font-weight: 500;
+            font-size: 10px;
+        }
+
+        .ticker-change.up { color: var(--color-success); }
+        .ticker-change.down { color: var(--color-danger); }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="header-logo">
+                    <div class="logo-icon">CP</div>
+                    <div class="logo-text">
+                        <span class="logo-brand">Coinpaprika</span>
+                        <span class="logo-product">RWA Portfolio Engine</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="header-search">
+                <input type="text" placeholder="Search RWA tokens, portfolios, analytics...">
+            </div>
+
+            <div class="header-right">
+                <div class="header-stat">
+                    <span class="header-stat-label">Portfolio Value</span>
+                    <span class="header-stat-value">$10.24M</span>
+                </div>
+                <div class="header-stat">
+                    <span class="header-stat-label">Daily P&L</span>
+                    <span class="header-stat-value" style="color: var(--color-success);">+$14,280</span>
+                </div>
+                <div class="status-badge">
+                    <div class="status-dot"></div>
+                    <span class="status-text">LIVE</span>
+                </div>
+                <div class="user-avatar tooltip" data-tooltip="John Smith">JS</div>
+            </div>
+        </header>
+
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Portfolio</div>
+                <a href="index.html" class="sidebar-item active">
+                    <span class="sidebar-item-icon">📊</span>
+                    Dashboard
+                </a>
+                <a href="pages/holdings.html" class="sidebar-item">
+                    <span class="sidebar-item-icon">💼</span>
+                    My Holdings
+                </a>
+                <a href="pages/allocations.html" class="sidebar-item">
+                    <span class="sidebar-item-icon">📈</span>
+                    Allocations
+                </a>
+                <a href="pages/performance.html" class="sidebar-item">
+                    <span class="sidebar-item-icon">⚡</span>
+                    Performance
+                </a>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">Analysis</div>
+                <a href="pages/rwa-universe.html" class="sidebar-item">
+                    <span class="sidebar-item-icon">🏛️</span>
+                    RWA Universe
+                </a>
+                <a href="pages/yield.html" class="sidebar-item">
+                    <span class="sidebar-item-icon">💰</span>
+                    Yield Compare
+                </a>
+                <a href="pages/settlement.html" class="sidebar-item">
+                    <span class="sidebar-item-icon">🔄</span>
+                    Settlement
+                </a>
+                <a href="pages/risk.html" class="sidebar-item">
+                    <span class="sidebar-item-icon">🛡️</span>
+                    Risk Dashboard
+                </a>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">Execution</div>
+                <a href="pages/rebalance.html" class="sidebar-item">
+                    <span class="sidebar-item-icon">⚖️</span>
+                    Rebalance
+                    <span class="sidebar-badge">1</span>
+                </a>
+                <a href="pages/orders.html" class="sidebar-item">
+                    <span class="sidebar-item-icon">📋</span>
+                    Orders
+                </a>
+                <a href="pages/compliance.html" class="sidebar-item">
+                    <span class="sidebar-item-icon">✅</span>
+                    Compliance
+                </a>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">System</div>
+                <a href="pages/settings.html" class="sidebar-item">
+                    <span class="sidebar-item-icon">⚙️</span>
+                    Settings
+                </a>
+                <a href="pages/alerts.html" class="sidebar-item">
+                    <span class="sidebar-item-icon">🔔</span>
+                    Alerts
+                    <span class="sidebar-badge">3</span>
+                </a>
+                <a href="pages/history.html" class="sidebar-item">
+                    <span class="sidebar-item-icon">📜</span>
+                    History
+                </a>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="ai-status">
+                    <div class="ai-status-header">
+                        <span class="ai-status-icon">🤖</span>
+                        <span class="ai-status-title">AI Engine Active</span>
+                    </div>
+                    <div class="ai-status-text">
+                        Analyzing 847 RWA tokens across 12 chains. Last optimization: 2 min ago.
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content" id="main-content">
+            <!-- Top Left: AI Recommendations -->
+            <div class="panel fade-in">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span class="panel-title-icon">🤖</span>
+                        <span>AI <span class="panel-title-accent">Allocation</span> Recommendations</span>
+                    </div>
+                    <div class="panel-meta">
+                        <span class="panel-meta-dot"></span>
+                        Updated 2 min ago
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <!-- Live Ticker -->
+                    <div class="live-ticker">
+                        <span class="ticker-label">Live</span>
+                        <div class="ticker-track">
+                            <div class="ticker-content">
+                                <div class="ticker-item">
+                                    <span class="ticker-symbol">OUSG</span>
+                                    <span class="ticker-price">$52.48</span>
+                                    <span class="ticker-change up">+0.12%</span>
+                                </div>
+                                <div class="ticker-item">
+                                    <span class="ticker-symbol">FOBXX</span>
+                                    <span class="ticker-price">$10.02</span>
+                                    <span class="ticker-change up">+0.03%</span>
+                                </div>
+                                <div class="ticker-item">
+                                    <span class="ticker-symbol">USDY</span>
+                                    <span class="ticker-price">$1.0615</span>
+                                    <span class="ticker-change up">+0.08%</span>
+                                </div>
+                                <div class="ticker-item">
+                                    <span class="ticker-symbol">BUIDL</span>
+                                    <span class="ticker-price">$1.00</span>
+                                    <span class="ticker-change">0.00%</span>
+                                </div>
+                                <div class="ticker-item">
+                                    <span class="ticker-symbol">OUSG</span>
+                                    <span class="ticker-price">$52.48</span>
+                                    <span class="ticker-change up">+0.12%</span>
+                                </div>
+                                <div class="ticker-item">
+                                    <span class="ticker-symbol">FOBXX</span>
+                                    <span class="ticker-price">$10.02</span>
+                                    <span class="ticker-change up">+0.03%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rec-container">
+                        <div class="rec-card" id="rec-ousg">
+                            <div class="rec-header">
+                                <div class="rec-title-wrapper">
+                                    <div class="rec-title">OUSG</div>
+                                    <div class="rec-subtitle">BlackRock Treasury Fund</div>
+                                </div>
+                                <div class="rec-badge strong">Strong Buy</div>
+                            </div>
+                            <div class="rec-metrics">
+                                <div class="rec-metric">
+                                    <div class="rec-metric-value">5.28%</div>
+                                    <div class="rec-metric-label">Current Yield</div>
+                                </div>
+                                <div class="rec-metric">
+                                    <div class="rec-metric-value">0-1yr</div>
+                                    <div class="rec-metric-label">Duration</div>
+                                </div>
+                                <div class="rec-metric">
+                                    <div class="rec-metric-value">+$2.5M</div>
+                                    <div class="rec-metric-label">Recommended</div>
+                                </div>
+                            </div>
+                            <div class="rec-insight">
+                                <strong>AI Insight:</strong> Highest risk-adjusted return in current market. On-chain settlement efficiency: 4hrs avg. Optimal for yield maximization within constraints.
+                            </div>
+                            <div class="confidence-bar">
+                                <div class="confidence-header">
+                                    <span class="confidence-label">AI Confidence</span>
+                                    <span class="confidence-value">94%</span>
+                                </div>
+                                <div class="confidence-track">
+                                    <div class="confidence-fill" style="width: 94%;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="rec-card" id="rec-fobxx">
+                            <div class="rec-header">
+                                <div class="rec-title-wrapper">
+                                    <div class="rec-title">FOBXX</div>
+                                    <div class="rec-subtitle">Franklin Templeton Money Market</div>
+                                </div>
+                                <div class="rec-badge moderate">Hold</div>
+                            </div>
+                            <div class="rec-metrics">
+                                <div class="rec-metric">
+                                    <div class="rec-metric-value">4.92%</div>
+                                    <div class="rec-metric-label">Current Yield</div>
+                                </div>
+                                <div class="rec-metric">
+                                    <div class="rec-metric-value">6mo</div>
+                                    <div class="rec-metric-label">Avg Duration</div>
+                                </div>
+                                <div class="rec-metric">
+                                    <div class="rec-metric-value">$3.2M</div>
+                                    <div class="rec-metric-label">Current Position</div>
+                                </div>
+                            </div>
+                            <div class="rec-insight">
+                                <strong>AI Insight:</strong> Maintain current exposure. Rate environment stable. Consider partial reallocation to OUSG for +12bps yield improvement.
+                            </div>
+                            <div class="confidence-bar">
+                                <div class="confidence-header">
+                                    <span class="confidence-label">AI Confidence</span>
+                                    <span class="confidence-value">87%</span>
+                                </div>
+                                <div class="confidence-track">
+                                    <div class="confidence-fill" style="width: 87%;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="rec-card" id="rec-usdy" style="opacity: 0.75;">
+                            <div class="rec-header">
+                                <div class="rec-title-wrapper">
+                                    <div class="rec-title">USDY</div>
+                                    <div class="rec-subtitle">Ondo Corporate Bonds</div>
+                                </div>
+                                <div class="rec-badge reduce">Reduce</div>
+                            </div>
+                            <div class="rec-metrics">
+                                <div class="rec-metric">
+                                    <div class="rec-metric-value">6.15%</div>
+                                    <div class="rec-metric-label">Current Yield</div>
+                                </div>
+                                <div class="rec-metric">
+                                    <div class="rec-metric-value">-$1.0M</div>
+                                    <div class="rec-metric-label">Recommended</div>
+                                </div>
+                                <div class="rec-metric">
+                                    <div class="rec-metric-value">-10%</div>
+                                    <div class="rec-metric-label">Allocation Change</div>
+                                </div>
+                            </div>
+                            <div class="rec-insight">
+                                <strong>AI Alert:</strong> Liquidity depth declining 23% over past week. Credit spread widening detected. Recommend taking profits on this position.
+                            </div>
+                            <div class="confidence-bar">
+                                <div class="confidence-header">
+                                    <span class="confidence-label">AI Confidence</span>
+                                    <span class="confidence-value">78%</span>
+                                </div>
+                                <div class="confidence-track">
+                                    <div class="confidence-fill" style="width: 78%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Right: Portfolio Stats -->
+            <div class="panel fade-in" style="animation-delay: 0.1s;">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span class="panel-title-icon">📊</span>
+                        <span>Portfolio <span class="panel-title-accent">Metrics</span></span>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">Total AUM</span>
+                                <span class="stat-trend up">↑ 13.3%</span>
+                            </div>
+                            <div class="stat-value">$10.24M</div>
+                            <div class="stat-sub">+$1.2M YTD growth</div>
+                            <div class="mini-chart">
+                                <div class="mini-bar" style="height: 45%;"></div>
+                                <div class="mini-bar" style="height: 52%;"></div>
+                                <div class="mini-bar" style="height: 48%;"></div>
+                                <div class="mini-bar" style="height: 55%;"></div>
+                                <div class="mini-bar" style="height: 62%;"></div>
+                                <div class="mini-bar" style="height: 58%;"></div>
+                                <div class="mini-bar" style="height: 65%;"></div>
+                                <div class="mini-bar" style="height: 72%;"></div>
+                                <div class="mini-bar" style="height: 68%;"></div>
+                                <div class="mini-bar" style="height: 75%;"></div>
+                                <div class="mini-bar" style="height: 82%;"></div>
+                                <div class="mini-bar" style="height: 88%;"></div>
+                                <div class="mini-bar" style="height: 92%;"></div>
+                                <div class="mini-bar" style="height: 100%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">Weighted Avg Yield</span>
+                                <span class="stat-trend up">+32bps</span>
+                            </div>
+                            <div class="stat-value accent">5.12%</div>
+                            <div class="stat-sub">Benchmark: 4.80%</div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">30-Day Return</span>
+                                <span class="stat-trend up">↑ 0.42%</span>
+                            </div>
+                            <div class="stat-value" style="color: var(--color-success);">+$42,840</div>
+                            <div class="stat-sub">Unrealized gain</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <div class="panel-title" style="margin-bottom: 12px; font-size: 11px;">
+                            <span class="panel-title-icon">🔒</span>
+                            Active Constraints
+                        </div>
+                        <div class="constraints-list">
+                            <div class="constraint-item">
+                                <div class="constraint-info">
+                                    <div class="constraint-icon yield">📈</div>
+                                    <span class="constraint-label">Yield Range</span>
+                                </div>
+                                <span class="constraint-value">4.5% - 6.0%</span>
+                            </div>
+                            <div class="constraint-item">
+                                <div class="constraint-info">
+                                    <div class="constraint-icon risk">⚠️</div>
+                                    <span class="constraint-label">Max Liquidity Risk</span>
+                                </div>
+                                <span class="constraint-value">15%</span>
+                            </div>
+                            <div class="constraint-item">
+                                <div class="constraint-info">
+                                    <div class="constraint-icon credit">🏆</div>
+                                    <span class="constraint-label">Min Credit Grade</span>
+                                </div>
+                                <span class="constraint-value">Aaa/AA</span>
+                            </div>
+                            <div class="constraint-item">
+                                <div class="constraint-info">
+                                    <div class="constraint-icon time">⏱️</div>
+                                    <span class="constraint-label">Settlement Speed</span>
+                                </div>
+                                <span class="constraint-value">&lt;24hrs</span>
+                            </div>
+                        </div>
+
+                        <div class="alert-banner">
+                            <span class="alert-icon">⚠️</span>
+                            <div class="alert-content">
+                                <div class="alert-title">Constraint Violation Detected</div>
+                                <div class="alert-text">One asset may violate credit constraint thresholds. AI recommends reviewing USDY position reduction.</div>
+                            </div>
+                        </div>
+
+                        <button class="btn" id="updateConstraints">
+                            <span>⚙️</span>
+                            Update Constraints
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Left: Current Holdings -->
+            <div class="panel fade-in" style="animation-delay: 0.2s;">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span class="panel-title-icon">💼</span>
+                        <span>Current <span class="panel-title-accent">Holdings</span></span>
+                    </div>
+                    <div class="panel-meta">
+                        5 positions
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Asset</th>
+                                    <th>Position</th>
+                                    <th>Value</th>
+                                    <th>Yield</th>
+                                    <th>24h</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="ticker-cell">
+                                            <div class="ticker-icon treasury">OU</div>
+                                            <div class="ticker-info">
+                                                <span class="ticker-symbol">OUSG</span>
+                                                <span class="ticker-name">BlackRock Treasury</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>50,000 shares</td>
+                                    <td><strong>$2.62M</strong></td>
+                                    <td><span class="value-up">5.28%</span></td>
+                                    <td><span class="value-up">+0.12%</span></td>
+                                    <td>
+                                        <div class="status-cell">
+                                            <div class="status-indicator live"></div>
+                                            LIVE
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="ticker-cell">
+                                            <div class="ticker-icon money-market">FO</div>
+                                            <div class="ticker-info">
+                                                <span class="ticker-symbol">FOBXX</span>
+                                                <span class="ticker-name">Franklin Templeton MM</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>320,000 shares</td>
+                                    <td><strong>$3.21M</strong></td>
+                                    <td><span class="value-up">4.92%</span></td>
+                                    <td><span class="value-up">+0.03%</span></td>
+                                    <td>
+                                        <div class="status-cell">
+                                            <div class="status-indicator live"></div>
+                                            LIVE
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="ticker-cell">
+                                            <div class="ticker-icon corporate">US</div>
+                                            <div class="ticker-info">
+                                                <span class="ticker-symbol">USDY</span>
+                                                <span class="ticker-name">Ondo Corporate Bonds</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>1,036,500 tokens</td>
+                                    <td><strong>$1.10M</strong></td>
+                                    <td><span class="value-up">6.15%</span></td>
+                                    <td><span class="value-up">+0.08%</span></td>
+                                    <td>
+                                        <div class="status-cell">
+                                            <div class="status-indicator live"></div>
+                                            LIVE
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="ticker-cell">
+                                            <div class="ticker-icon credit">LE</div>
+                                            <div class="ticker-info">
+                                                <span class="ticker-symbol">LEND:REPO</span>
+                                                <span class="ticker-name">Credit Facility</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>2,800 units</td>
+                                    <td><strong>$2.10M</strong></td>
+                                    <td><span class="value-neutral">5.05%</span></td>
+                                    <td><span class="value-neutral">0.00%</span></td>
+                                    <td>
+                                        <div class="status-cell">
+                                            <div class="status-indicator pending"></div>
+                                            PENDING
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="ticker-cell">
+                                            <div class="ticker-icon real-estate">RE</div>
+                                            <div class="ticker-info">
+                                                <span class="ticker-symbol">REAL:NY</span>
+                                                <span class="ticker-name">NYC Real Estate</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>45.32 tokens</td>
+                                    <td><strong>$1.21M</strong></td>
+                                    <td><span class="value-down">3.82%</span></td>
+                                    <td><span class="value-down">-0.15%</span></td>
+                                    <td>
+                                        <div class="status-cell">
+                                            <div class="status-indicator live"></div>
+                                            LIVE
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Right: AI Insights & Allocation -->
+            <div class="panel fade-in" style="animation-delay: 0.3s;">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <span class="panel-title-icon">💡</span>
+                        <span>AI <span class="panel-title-accent">Insights</span></span>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="insights-container">
+                        <div class="insight-card">
+                            <div class="insight-header">
+                                <span class="insight-icon">⚡</span>
+                                <span class="insight-title">Settlement Efficiency Gain</span>
+                            </div>
+                            <div class="insight-text">
+                                Moving <strong>20%</strong> from FOBXX to OUSG reduces avg settlement time by <strong>8 hours</strong> and frees <strong>$180K</strong> in liquidity.
+                            </div>
+                            <span class="insight-metric">Est. Savings: $2,400/mo</span>
+                        </div>
+
+                        <div class="insight-card">
+                            <div class="insight-header">
+                                <span class="insight-icon">📈</span>
+                                <span class="insight-title">Yield Optimization</span>
+                            </div>
+                            <div class="insight-text">
+                                Current <strong>5.12%</strong> avg yield beats benchmark by <strong>32bps</strong>. Recommended rebalance adds additional <strong>+12bps</strong>.
+                            </div>
+                            <span class="insight-metric">Projected: 5.24% yield</span>
+                        </div>
+
+                        <div class="insight-card">
+                            <div class="insight-header">
+                                <span class="insight-icon">🔮</span>
+                                <span class="insight-title">Predictive Alert</span>
+                            </div>
+                            <div class="insight-text">
+                                ML model detects <strong>REAL:NY</strong> token liquidity declining. Probability of 15%+ slippage on large orders: <strong>68%</strong>.
+                            </div>
+                            <span class="insight-metric">Action: Review position</span>
+                        </div>
+
+                        <div class="insight-card">
+                            <div class="insight-header">
+                                <span class="insight-icon">✅</span>
+                                <span class="insight-title">Compliance Status</span>
+                            </div>
+                            <div class="insight-text">
+                                All holdings pass <strong>MiCA</strong> compliance. Cross-chain settlement verified. <strong>100% AUM</strong> cleared for institutional mandates.
+                            </div>
+                            <span class="insight-metric">Status: Fully Compliant</span>
+                        </div>
+                    </div>
+
+                    <div class="rebalance-preview">
+                        <div class="rebalance-title">Allocation Breakdown</div>
+                        <div class="allocation-container">
+                            <div class="allocation-item">
+                                <div class="allocation-header">
+                                    <div class="allocation-label">
+                                        <span class="allocation-dot" style="background: #10b981;"></span>
+                                        Treasury Funds
+                                    </div>
+                                    <span class="allocation-value">57% ($5.83M)</span>
+                                </div>
+                                <div class="allocation-bar">
+                                    <div class="allocation-fill treasury" style="width: 57%;"></div>
+                                </div>
+                            </div>
+                            <div class="allocation-item">
+                                <div class="allocation-header">
+                                    <div class="allocation-label">
+                                        <span class="allocation-dot" style="background: #3b82f6;"></span>
+                                        Corporate Bonds
+                                    </div>
+                                    <span class="allocation-value">11% ($1.10M)</span>
+                                </div>
+                                <div class="allocation-bar">
+                                    <div class="allocation-fill bonds" style="width: 11%;"></div>
+                                </div>
+                            </div>
+                            <div class="allocation-item">
+                                <div class="allocation-header">
+                                    <div class="allocation-label">
+                                        <span class="allocation-dot" style="background: #8b5cf6;"></span>
+                                        Credit/Repo
+                                    </div>
+                                    <span class="allocation-value">20% ($2.10M)</span>
+                                </div>
+                                <div class="allocation-bar">
+                                    <div class="allocation-fill credit" style="width: 20%;"></div>
+                                </div>
+                            </div>
+                            <div class="allocation-item">
+                                <div class="allocation-header">
+                                    <div class="allocation-label">
+                                        <span class="allocation-dot" style="background: #f59e0b;"></span>
+                                        Real Estate
+                                    </div>
+                                    <span class="allocation-value">12% ($1.21M)</span>
+                                </div>
+                                <div class="allocation-bar">
+                                    <div class="allocation-fill real-estate" style="width: 12%;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="btn" id="executeRebalance">
+                            <span>⚖️</span>
+                            Execute AI Rebalance
+                        </button>
+                        <button class="btn btn-secondary" style="margin-top: 8px;" id="customizeAllocation">
+                            <span>✏️</span>
+                            Customize Allocation
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Simulated real-time data updates
+        const portfolioValue = document.querySelector('.header-stat-value');
+        const dailyPnL = document.querySelectorAll('.header-stat-value')[1];
+
+        // Simulate live price updates
+        function updatePrices() {
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const change24h = row.querySelector('td:nth-child(5) span');
+                if (change24h && Math.random() > 0.7) {
+                    const currentValue = parseFloat(change24h.textContent);
+                    const delta = (Math.random() - 0.5) * 0.1;
+                    const newValue = currentValue + delta;
+                    change24h.textContent = (newValue >= 0 ? '+' : '') + newValue.toFixed(2) + '%';
+                    change24h.className = newValue >= 0 ? 'value-up' : 'value-down';
+                }
+            });
+        }
+
+        // Update every 3 seconds
+        setInterval(updatePrices, 3000);
+
+        // Sidebar navigation
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+
+                // Add visual feedback
+                this.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 100);
+            });
+        });
+
+        // Recommendation card selection
+        document.querySelectorAll('.rec-card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.rec-card').forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+
+                // Animate the selection
+                this.style.transform = 'scale(1.02)';
+                setTimeout(() => {
+                    this.style.transform = 'translateY(-2px)';
+                }, 150);
+            });
+        });
+
+        // Button interactions
+        document.getElementById('executeRebalance')?.addEventListener('click', function() {
+            this.innerHTML = '<span>⏳</span> Executing...';
+            this.style.opacity = '0.7';
+
+            setTimeout(() => {
+                this.innerHTML = '<span>✅</span> Rebalance Complete!';
+                this.style.background = 'linear-gradient(135deg, var(--color-success) 0%, #059669 100%)';
+
+                setTimeout(() => {
+                    this.innerHTML = '<span>⚖️</span> Execute AI Rebalance';
+                    this.style.background = '';
+                    this.style.opacity = '';
+                }, 2000);
+            }, 1500);
+        });
+
+        document.getElementById('updateConstraints')?.addEventListener('click', function() {
+            this.innerHTML = '<span>⚙️</span> Opening Settings...';
+            setTimeout(() => {
+                this.innerHTML = '<span>⚙️</span> Update Constraints';
+                alert('Constraints configuration panel would open here.');
+            }, 500);
+        });
+
+        document.getElementById('customizeAllocation')?.addEventListener('click', function() {
+            this.innerHTML = '<span>✏️</span> Loading Editor...';
+            setTimeout(() => {
+                this.innerHTML = '<span>✏️</span> Customize Allocation';
+                alert('Custom allocation editor would open here.');
+            }, 500);
+        });
+
+        // Mini chart hover effect
+        document.querySelectorAll('.mini-bar').forEach((bar, index) => {
+            bar.addEventListener('mouseenter', function() {
+                this.style.transform = 'scaleY(1.1)';
+            });
+            bar.addEventListener('mouseleave', function() {
+                this.style.transform = '';
+            });
+        });
+
+        // Table row hover effects
+        document.querySelectorAll('tbody tr').forEach(row => {
+            row.addEventListener('click', function() {
+                const ticker = this.querySelector('.ticker-symbol')?.textContent;
+                if (ticker) {
+                    console.log(`Opening details for ${ticker}`);
+                    // Could show a modal with more details
+                }
+            });
+        });
+
+        // Animate confidence bars on load
+        setTimeout(() => {
+            document.querySelectorAll('.confidence-fill').forEach(fill => {
+                const width = fill.style.width;
+                fill.style.width = '0';
+                setTimeout(() => {
+                    fill.style.width = width;
+                }, 100);
+            });
+        }, 500);
+
+        // Animate allocation bars on load
+        setTimeout(() => {
+            document.querySelectorAll('.allocation-fill').forEach(fill => {
+                const width = fill.style.width;
+                fill.style.width = '0';
+                setTimeout(() => {
+                    fill.style.width = width;
+                }, 100);
+            });
+        }, 700);
+
+        // Search functionality
+        const searchInput = document.querySelector('.header-search input');
+        searchInput?.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const query = this.value.trim();
+                if (query) {
+                    console.log(`Searching for: ${query}`);
+                    // Would trigger search functionality
+                }
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                searchInput?.focus();
+            }
+        });
+
+        // Insight cards hover animation
+        document.querySelectorAll('.insight-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.querySelector('.insight-icon').style.transform = 'scale(1.2)';
+            });
+            card.addEventListener('mouseleave', function() {
+                this.querySelector('.insight-icon').style.transform = '';
+            });
+        });
+
+        // Stats cards value animation
+        function animateValue(element, start, end, duration) {
+            const range = end - start;
+            const startTime = performance.now();
+
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const value = start + (range * progress);
+                element.textContent = '$' + value.toFixed(2) + 'M';
+
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+
+            requestAnimationFrame(update);
+        }
+
+        // Trigger value animation on load
+        setTimeout(() => {
+            const aumElement = document.querySelector('.stat-value');
+            if (aumElement) {
+                animateValue(aumElement, 0, 10.24, 1000);
+            }
+        }, 300);
+
+        console.log('Coinpaprika RWA Portfolio Engine initialized');
+        console.log('AI Engine: Active | Last optimization: 2 minutes ago');
+    </script>
+</body>
+</html>

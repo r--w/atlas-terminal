@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RWA Universe | Coinpaprika RWA Portfolio Engine</title>
+    <link rel="stylesheet" href="../shared.css">
+    <style>
+        .universe-stats {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .universe-stat {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .universe-stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--color-accent);
+        }
+
+        .universe-stat-label {
+            font-size: 11px;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-label {
+            font-size: 10px;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+        }
+
+        .filter-select {
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            padding: 10px 32px 10px 12px;
+            color: var(--color-text-primary);
+            font-size: 13px;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238899a8' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            cursor: pointer;
+            min-width: 150px;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--color-accent);
+        }
+
+        .asset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .asset-card {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            transition: all var(--transition-normal);
+            cursor: pointer;
+        }
+
+        .asset-card:hover {
+            border-color: var(--color-accent);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .asset-header {
+            padding: 20px;
+            background: var(--color-bg-tertiary);
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .asset-title {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .asset-symbol {
+            font-size: 16px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--color-text-primary);
+        }
+
+        .asset-name {
+            font-size: 12px;
+            color: var(--color-text-muted);
+            margin-top: 2px;
+        }
+
+        .asset-category {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .asset-category.treasury {
+            background: var(--color-success-dim);
+            color: var(--color-success);
+        }
+
+        .asset-category.money-market {
+            background: var(--color-info-dim);
+            color: var(--color-info);
+        }
+
+        .asset-category.corporate {
+            background: var(--color-warning-dim);
+            color: var(--color-warning);
+        }
+
+        .asset-category.credit {
+            background: var(--color-purple-dim);
+            color: var(--color-purple);
+        }
+
+        .asset-category.real-estate {
+            background: var(--color-danger-dim);
+            color: var(--color-danger);
+        }
+
+        .asset-body {
+            padding: 20px;
+        }
+
+        .asset-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .asset-metric {
+            text-align: center;
+        }
+
+        .asset-metric-value {
+            font-size: 18px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--color-accent);
+        }
+
+        .asset-metric-label {
+            font-size: 10px;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+        }
+
+        .asset-details {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-top: 16px;
+            border-top: 1px solid var(--color-border);
+        }
+
+        .asset-detail {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+
+        .asset-detail-label {
+            color: var(--color-text-muted);
+        }
+
+        .asset-detail-value {
+            color: var(--color-text-primary);
+            font-weight: 500;
+        }
+
+        .asset-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .asset-actions .btn {
+            flex: 1;
+            padding: 10px;
+            font-size: 12px;
+        }
+
+        .chain-list {
+            display: flex;
+            gap: 6px;
+        }
+
+        .chain-tag {
+            padding: 2px 8px;
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border);
+            border-radius: 10px;
+            font-size: 10px;
+            color: var(--color-text-secondary);
+        }
+
+        .ai-score {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: linear-gradient(135deg, var(--color-accent-dim) 0%, transparent 100%);
+            border: 1px solid var(--color-accent);
+            border-radius: var(--radius-sm);
+            margin-top: 16px;
+        }
+
+        .ai-score-icon {
+            font-size: 14px;
+        }
+
+        .ai-score-label {
+            font-size: 11px;
+            color: var(--color-text-secondary);
+        }
+
+        .ai-score-value {
+            margin-left: auto;
+            font-size: 14px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--color-accent);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="container">
+        <header class="header">
+            <div class="header-left">
+                <a href="../index.html" class="header-logo">
+                    <div class="logo-icon">CP</div>
+                    <div class="logo-text">
+                        <span class="logo-brand">Coinpaprika</span>
+                        <span class="logo-product">RWA Portfolio Engine</span>
+                    </div>
+                </a>
+            </div>
+            <div class="header-search">
+                <input type="text" placeholder="Search RWA tokens, portfolios, analytics...">
+            </div>
+            <div class="header-right">
+                <div class="header-stat">
+                    <span class="header-stat-label">Portfolio Value</span>
+                    <span class="header-stat-value">$10.24M</span>
+                </div>
+                <div class="status-badge">
+                    <div class="status-dot"></div>
+                    <span class="status-text">LIVE</span>
+                </div>
+                <div class="user-avatar">JS</div>
+            </div>
+        </header>
+
+        <nav class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Portfolio</div>
+                <a href="../index.html" class="sidebar-item"><span class="sidebar-item-icon">📊</span>Dashboard</a>
+                <a href="holdings.html" class="sidebar-item"><span class="sidebar-item-icon">💼</span>My Holdings</a>
+                <a href="allocations.html" class="sidebar-item"><span class="sidebar-item-icon">📈</span>Allocations</a>
+                <a href="performance.html" class="sidebar-item"><span class="sidebar-item-icon">⚡</span>Performance</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Analysis</div>
+                <a href="rwa-universe.html" class="sidebar-item active"><span class="sidebar-item-icon">🏛️</span>RWA Universe</a>
+                <a href="yield.html" class="sidebar-item"><span class="sidebar-item-icon">💰</span>Yield Compare</a>
+                <a href="settlement.html" class="sidebar-item"><span class="sidebar-item-icon">🔄</span>Settlement</a>
+                <a href="risk.html" class="sidebar-item"><span class="sidebar-item-icon">🛡️</span>Risk Dashboard</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Execution</div>
+                <a href="rebalance.html" class="sidebar-item"><span class="sidebar-item-icon">⚖️</span>Rebalance<span class="sidebar-badge">1</span></a>
+                <a href="orders.html" class="sidebar-item"><span class="sidebar-item-icon">📋</span>Orders</a>
+                <a href="compliance.html" class="sidebar-item"><span class="sidebar-item-icon">✅</span>Compliance</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">System</div>
+                <a href="settings.html" class="sidebar-item"><span class="sidebar-item-icon">⚙️</span>Settings</a>
+                <a href="alerts.html" class="sidebar-item"><span class="sidebar-item-icon">🔔</span>Alerts<span class="sidebar-badge">3</span></a>
+                <a href="history.html" class="sidebar-item"><span class="sidebar-item-icon">📜</span>History</a>
+            </div>
+            <div class="sidebar-footer">
+                <div class="ai-status">
+                    <div class="ai-status-header">
+                        <span class="ai-status-icon">🤖</span>
+                        <span class="ai-status-title">AI Engine Active</span>
+                    </div>
+                    <div class="ai-status-text">Scanning 847 RWA tokens...</div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">
+                    <span class="page-title-icon">🏛️</span>
+                    RWA Universe Explorer
+                </h1>
+                <p class="page-subtitle">Discover and analyze tokenized real-world assets across multiple chains</p>
+            </div>
+
+            <div class="universe-stats fade-in">
+                <div class="universe-stat">
+                    <div class="universe-stat-value">847</div>
+                    <div class="universe-stat-label">Total Tokens</div>
+                </div>
+                <div class="universe-stat">
+                    <div class="universe-stat-value">$16.2B</div>
+                    <div class="universe-stat-label">Total AUM</div>
+                </div>
+                <div class="universe-stat">
+                    <div class="universe-stat-value">12</div>
+                    <div class="universe-stat-label">Chains</div>
+                </div>
+                <div class="universe-stat">
+                    <div class="universe-stat-value">5.1%</div>
+                    <div class="universe-stat-label">Avg Yield</div>
+                </div>
+                <div class="universe-stat">
+                    <div class="universe-stat-value">42</div>
+                    <div class="universe-stat-label">Issuers</div>
+                </div>
+            </div>
+
+            <div class="filter-bar fade-in" style="animation-delay: 0.1s;">
+                <div class="filter-group">
+                    <span class="filter-label">Category</span>
+                    <select class="filter-select">
+                        <option>All Categories</option>
+                        <option>Treasury Bills</option>
+                        <option>Money Market</option>
+                        <option>Corporate Bonds</option>
+                        <option>Private Credit</option>
+                        <option>Real Estate</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">Chain</span>
+                    <select class="filter-select">
+                        <option>All Chains</option>
+                        <option>Ethereum</option>
+                        <option>Polygon</option>
+                        <option>Solana</option>
+                        <option>Avalanche</option>
+                        <option>Arbitrum</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">Min Yield</span>
+                    <select class="filter-select">
+                        <option>Any</option>
+                        <option>> 3%</option>
+                        <option>> 4%</option>
+                        <option>> 5%</option>
+                        <option>> 6%</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">Credit Rating</span>
+                    <select class="filter-select">
+                        <option>Any</option>
+                        <option>AAA/Aaa</option>
+                        <option>AA/Aa</option>
+                        <option>A</option>
+                        <option>BBB/Baa</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">Sort By</span>
+                    <select class="filter-select">
+                        <option>AI Score</option>
+                        <option>Yield (High-Low)</option>
+                        <option>AUM (High-Low)</option>
+                        <option>Newest</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="asset-grid">
+                <!-- OUSG -->
+                <div class="asset-card fade-in" style="animation-delay: 0.2s;">
+                    <div class="asset-header">
+                        <div class="asset-title">
+                            <div class="ticker-icon treasury">OU</div>
+                            <div>
+                                <div class="asset-symbol">OUSG</div>
+                                <div class="asset-name">Ondo US Government Bond Fund</div>
+                            </div>
+                        </div>
+                        <span class="asset-category treasury">Treasury</span>
+                    </div>
+                    <div class="asset-body">
+                        <div class="asset-metrics">
+                            <div class="asset-metric">
+                                <div class="asset-metric-value">5.28%</div>
+                                <div class="asset-metric-label">Yield</div>
+                            </div>
+                            <div class="asset-metric">
+                                <div class="asset-metric-value">$4.2B</div>
+                                <div class="asset-metric-label">AUM</div>
+                            </div>
+                            <div class="asset-metric">
+                                <div class="asset-metric-value">0-1yr</div>
+                                <div class="asset-metric-label">Duration</div>
+                            </div>
+                        </div>
+                        <div class="asset-details">
+                            <div class="asset-detail">
+                                <span class="asset-detail-label">Issuer</span>
+                                <span class="asset-detail-value">Ondo Finance (BlackRock)</span>
+                            </div>
+                            <div class="asset-detail">
+                                <span class="asset-detail-label">Credit Rating</span>
+                                <span class="asset-detail-value">Aaa/AAA</span>
+                            </div>
+                            <div class="asset-detail">
+                                <span class="asset-detail-label">Settlement</span>
+                                <span class="asset-detail-value">T+0 (4hr avg)</span>
+                            </div>
+                            <div class="asset-detail">
+                                <span class="asset-detail-label">Chains</span>
+                                <div class="chain-list">
+                                    <span class="chain-tag">Ethereum</span>
+                                    <span class="chain-tag">Polygon</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ai-score">
+                            <span class="ai-score-icon">🤖</span>
+                            <span class="ai-score-label">AI Recommendation Score</span>
+                            <span class="ai-score-value">94/100</span>
+                        </div>
+                        <div class="asset-actions">
+                            <button class="btn">Buy Now</button>
+                            <button class="btn btn-secondary">Details</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BUIDL -->
+                <div class="asset-card fade-in" style="animation-delay: 0.25s;">
+                    <div class="asset-header">
+                        <div class="asset-title">
+                            <div class="ticker-icon money-market">BU</div>
+                            <div>
+                                <div class="asset-symbol">BUIDL</div>
+                                <div class="asset-name">BlackRock USD Institutional Digital Liquidity</div>
+                            </div>
+                        </div>
+                        <span class="asset-category money-market">Money Market</span>
+                    </div>
+                    <div class="asset-body">
+                        <div class="asset-metrics">
+                            <div class="asset-metric">
+                                <div class="asset-metric-value">5.15%</div>
+                                <div class="asset-metric-label">Yield</div>
+                            </div>
+                            <div class="asset-metric">
+                                <div class="asset-metric-value">$520M</div>
+                                <div class="asset-metric-label">AUM</div>
+                            </div>
+                            <div class="asset-metric">
+                                <div class="asset-metric-value">1d</div>
+                                <div class="asset-metric-label">Duration</div>
+                            </div>
+                        </div>
+                        <div class="asset-details">
+                            <div class="asset-detail">
+                                <span class="asset-detail-label">Issuer</span>
+                                <span class="asset-detail-value">BlackRock / Securitize</span>
+                            </div>
+                            <div class="asset-detail">
+                                <span class="asset-detail-label">Credit Rating</span>
+                                <span class="asset-detail-value">Aaa/AAA</span>
+                            </div>
+                            <div class="asset-detail">
+                                <span class="asset-detail-label">Settlement</span>
+                                <span class="asset-detail-value">T+0 (instant)</span>
+                            </div>
+                            <div class="asset-detail">
+                                <span class="asset-detail-label">Chains</span>
+                                <div class="chain-list">
+                                    <span class="chain-tag">Ethereum</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ai-score">
+                            <span class="ai-score-icon">🤖</span>
+                            <span class="ai-score-label">AI Recommendation Score</span>
+                            <span class="ai-score-value">96/100</span>
+                        </div>
+                        <div class="asset-actions">
+                            <button class="btn">Buy Now</button>
+                            <button class="btn btn-secondary">Details</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FOBXX -->
+                <div class="asset-card fade-in" style="animation-delay: 0.3s;">
+                    <div class="asset-header">
+                        <div class="asset-title">
+                            <div class="ticker-icon money-market">FO</div>
+                            <div>
+                                <div class="asset-symbol">FOBXX</div>
+                                <div class="asset-name">Franklin OnChain US Gov Money Fund</div>
+                            </div>
+                        </div>
+                        <span class="asset-category money-market">Money Market</span>
+                    </div>
+                    <div class="asset-body">
+                        <div class="asset-metrics">
+                            <div class="asset-metric">
+                                <div class="asset-metric-value">4.92%</div>
+                                <div class="asset-metric-label">Yield</div>
+                            </div>
+                            <div class="asset-metric">
+                                <div class="asset-metric-value">$3.8B</div>
+                                <div class="asset-metric-label">AUM</div>
+                            </div>
+                            <div class="asset-metric">
+                                <div class="asset-metric-value">6mo</div>
+                                <div class="asset-metric-label">Duration</div>
+                            </div>
+                        </div>
+                        <div class="asset-details">
+                            <div class="asset-detail">
+                                <span class="asset-detail-label">Issuer</span>
+                                <span class="asset-detail-value">Franklin Templeton</span>
+                            </div>
+                            <div class="asset-detail">
+                                <span class="asset-detail-label">Credit Rating</span>
+                                <span class="asset-detail-value">Aaa/AAA</span>
+                            </div>
+                            <div class="asset-detail">
+                                <span class="asset-detail-label">Settlement</span>
+                                <span class="asset-detail-value">T+0 (6hr avg)</span>
+                            </div>
+                            <div class="asset-detail">
+                                <span class="asset-detail-label">Chains</span>
+                                <div class="chain-list">
+                                    <span class="chain-tag">Polygon</span>
+                                    <span class="chain-tag">Stellar</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ai-score">
+                            <span class="ai-score-icon">🤖</span>
+                            <span class="ai-score-label">AI Recommendation Score</span>
+                            <span class="ai-score-value">89/100</span>
+                        </div>
+                        <div class="asset-actions">
+                            <button class="btn">Buy Now</button>
+                            <button class="btn btn-secondary">Details</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- USDY -->
+                <div class="asset-card fade-in" style="animation-delay: 0.35s;">
+                    <div class="asset-header">
+                        <div class="asset-title">
+                            <div class="ticker-icon corporate">US</div>
+                            <div>
+                                <div class="asset-symbol">USDY</div>
+                                <div class="asset-name">Ondo US Dollar Yield Token</div>
+                            </div>
+                        </div>
+                        <span class="asset-category corporate">Corporate</span>
+                    </div>
+                    <div class="asset-body">
+                        <div class="asset-metrics">
+                            <div class="asset-metric">
+                                <div class="asset-metric-value">6.15%</div>
+                                <div class="asset-metric-label">Yield</div>
+                            </div>
+                            <div class="asset-metric">
+                                <div class="asset-metric-value">$1.2B</div>
+                                <div class="asset-metric-label">AUM</div>
+                            </div>
+                            <div class="asset-metric">
+                                <div class="asset-metric-value">3yr</div>
+                                <div class="asset-metric-label">Duration</div>
+                            </div>
+                        </div>
+                        <div class="asset-details">
+                            <div class="asset-detail">
+                                <span class="asset-detail-label">Issuer</span>
+                                <span class="asset-detail-value">Ondo Finance</span>
+                            </div>
+                            <div class="asset-detail">
+                                <span class="asset-detail-label">Credit Rating</span>
+                                <span class="asset-detail-value">A/A2</span>
+                            </div>
+                            <div class="asset-detail">
+                                <span class="asset-detail-label">Settlement</span>
+                                <span class="asset-detail-value">T+0 (2hr avg)</span>
+                            </div>
+                            <div class="asset-detail">
+                                <span class="asset-detail-label">Chains</span>
+                                <div class="chain-list">
+                                    <span class="chain-tag">Solana</span>
+                                    <span class="chain-tag">Ethereum</span>
+                                    <span class="chain-tag">+3</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ai-score">
+                            <span class="ai-score-icon">🤖</span>
+                            <span class="ai-score-label">AI Recommendation Score</span>
+                            <span class="ai-score-value">72/100</span>
+                        </div>
+                        <div class="asset-actions">
+                            <button class="btn">Buy Now</button>
+                            <button class="btn btn-secondary">Details</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MAPLE -->
+                <div class="asset-card fade-in" style="animation-delay: 0.4s;">
+                    <div class="asset-header">
+                        <div class="asset-title">
+                            <div class="ticker-icon credit">MP</div>
+                            <div>
+                                <div class="asset-symbol">MAPLE:USDC</div>
+                                <div class="asset-name">Maple Finance USDC Pool</div>
+                            </div>
+                        </div>
+                        <span class="asset-category credit">Credit</span>
+                    </div>
+                    <div class="asset-body">
+                        <div class="asset-metrics">
+                            <div class="asset-metric">
+                                <div class="asset-metric-value">8.2%</div>
+                                <div class="asset-metric-label">Yield</div>
+                            </div>
+                            <div class="asset-metric">
+                                <div class="asset-metric-value">$180M</div>
+                                <div class="asset-metric-label">AUM</div>
+                            </div>
+                            <div class="asset-metric">
+                                <div class="asset-metric-value">90d</div>
+                                <div class="asset-metric-label">Avg Term</div>
+                            </div>
+                        </div>
+                        <div class="asset-details">
+                            <div class="asset-detail">
+                                <span class="asset-detail-label">Issuer</span>
+                                <span class="asset-detail-value">Maple Finance</span>
+                            </div>
+                            <div class="asset-detail">
+                                <span class="asset-detail-label">Credit Rating</span>
+                                <span class="asset-detail-value">BBB/Baa2</span>
+                            </div>
+                            <div class="asset-detail">
+                                <span class="asset-detail-label">Settlement</span>
+                                <span class="asset-detail-value">T+1 (24hr)</span>
+                            </div>
+                            <div class="asset-detail">
+                                <span class="asset-detail-label">Chains</span>
+                                <div class="chain-list">
+                                    <span class="chain-tag">Ethereum</span>
+                                    <span class="chain-tag">Solana</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ai-score">
+                            <span class="ai-score-icon">🤖</span>
+                            <span class="ai-score-label">AI Recommendation Score</span>
+                            <span class="ai-score-value">68/100</span>
+                        </div>
+                        <div class="asset-actions">
+                            <button class="btn">Buy Now</button>
+                            <button class="btn btn-secondary">Details</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RealT -->
+                <div class="asset-card fade-in" style="animation-delay: 0.45s;">
+                    <div class="asset-header">
+                        <div class="asset-title">
+                            <div class="ticker-icon real-estate">RT</div>
+                            <div>
+                                <div class="asset-symbol">REALT:NYC</div>
+                                <div class="asset-name">RealT NYC Commercial Bundle</div>
+                            </div>
+                        </div>
+                        <span class="asset-category real-estate">Real Estate</span>
+                    </div>
+                    <div class="asset-body">
+                        <div class="asset-metrics">
+                            <div class="asset-metric">
+                                <div class="asset-metric-value">4.8%</div>
+                                <div class="asset-metric-label">Yield</div>
+                            </div>
+                            <div class="asset-metric">
+                                <div class="asset-metric-value">$42M</div>
+                                <div class="asset-metric-label">AUM</div>
+                            </div>
+                            <div class="asset-metric">
+                                <div class="asset-metric-value">10yr</div>
+                                <div class="asset-metric-label">Hold Period</div>
+                            </div>
+                        </div>
+                        <div class="asset-details">
+                            <div class="asset-detail">
+                                <span class="asset-detail-label">Issuer</span>
+                                <span class="asset-detail-value">RealT</span>
+                            </div>
+                            <div class="asset-detail">
+                                <span class="asset-detail-label">Property Type</span>
+                                <span class="asset-detail-value">Commercial Office</span>
+                            </div>
+                            <div class="asset-detail">
+                                <span class="asset-detail-label">Settlement</span>
+                                <span class="asset-detail-value">T+2 (48hr)</span>
+                            </div>
+                            <div class="asset-detail">
+                                <span class="asset-detail-label">Chains</span>
+                                <div class="chain-list">
+                                    <span class="chain-tag">Ethereum</span>
+                                    <span class="chain-tag">Gnosis</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ai-score">
+                            <span class="ai-score-icon">🤖</span>
+                            <span class="ai-score-label">AI Recommendation Score</span>
+                            <span class="ai-score-value">58/100</span>
+                        </div>
+                        <div class="asset-actions">
+                            <button class="btn">Buy Now</button>
+                            <button class="btn btn-secondary">Details</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

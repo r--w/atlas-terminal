@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance | Coinpaprika RWA Portfolio Engine</title>
+    <link rel="stylesheet" href="../shared.css">
+    <style>
+        .performance-chart {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chart-btn {
+            padding: 8px 16px;
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            color: var(--color-text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all var(--transition-normal);
+        }
+
+        .chart-btn:hover, .chart-btn.active {
+            background: var(--color-accent);
+            color: var(--color-bg-primary);
+            border-color: var(--color-accent);
+        }
+
+        .line-chart {
+            height: 300px;
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .chart-grid {
+            position: absolute;
+            top: 0;
+            left: 60px;
+            right: 20px;
+            bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .chart-grid-line {
+            height: 1px;
+            background: var(--color-border);
+            position: relative;
+        }
+
+        .chart-grid-label {
+            position: absolute;
+            left: -55px;
+            top: -8px;
+            font-size: 10px;
+            color: var(--color-text-muted);
+            font-family: var(--font-mono);
+        }
+
+        .chart-line-container {
+            position: absolute;
+            top: 20px;
+            left: 60px;
+            right: 20px;
+            bottom: 50px;
+        }
+
+        .chart-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .chart-path {
+            fill: none;
+            stroke: var(--color-accent);
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .chart-area {
+            fill: url(#areaGradient);
+        }
+
+        .chart-x-axis {
+            position: absolute;
+            bottom: 0;
+            left: 60px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .chart-x-label {
+            font-size: 10px;
+            color: var(--color-text-muted);
+        }
+
+        .performance-metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .metric-card {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+
+        .metric-card.positive::before {
+            background: linear-gradient(90deg, var(--color-success) 0%, #059669 100%);
+        }
+
+        .metric-card.negative::before {
+            background: linear-gradient(90deg, var(--color-danger) 0%, #dc2626 100%);
+        }
+
+        .metric-card.neutral::before {
+            background: linear-gradient(90deg, var(--color-accent) 0%, #00a080 100%);
+        }
+
+        .metric-icon {
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+
+        .metric-value {
+            font-size: 32px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            margin-bottom: 4px;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: var(--color-text-muted);
+            margin-bottom: 12px;
+        }
+
+        .metric-comparison {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .metric-vs {
+            color: var(--color-text-muted);
+        }
+
+        .attribution-table {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+
+        .attribution-header {
+            padding: 20px 24px;
+            background: var(--color-bg-tertiary);
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .attribution-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+
+        .waterfall-chart {
+            padding: 24px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 16px;
+            height: 280px;
+        }
+
+        .waterfall-bar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 80px;
+        }
+
+        .waterfall-value {
+            font-size: 12px;
+            font-weight: 600;
+            font-family: var(--font-mono);
+            margin-bottom: 8px;
+        }
+
+        .waterfall-block {
+            width: 60px;
+            border-radius: 4px 4px 0 0;
+            transition: all var(--transition-normal);
+        }
+
+        .waterfall-block:hover {
+            transform: scaleY(1.05);
+            box-shadow: 0 -5px 20px rgba(0, 212, 170, 0.3);
+        }
+
+        .waterfall-block.positive {
+            background: linear-gradient(180deg, var(--color-success) 0%, #059669 100%);
+        }
+
+        .waterfall-block.negative {
+            background: linear-gradient(180deg, var(--color-danger) 0%, #dc2626 100%);
+        }
+
+        .waterfall-block.total {
+            background: linear-gradient(180deg, var(--color-accent) 0%, #00a080 100%);
+        }
+
+        .waterfall-label {
+            font-size: 11px;
+            color: var(--color-text-muted);
+            margin-top: 12px;
+            text-align: center;
+        }
+
+        .period-comparison {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .period-card {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 24px;
+        }
+
+        .period-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .period-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+
+        .period-return {
+            font-size: 24px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+        }
+
+        .period-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .period-stat {
+            padding: 12px;
+            background: var(--color-bg-card);
+            border-radius: var(--radius-sm);
+        }
+
+        .period-stat-label {
+            font-size: 10px;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .period-stat-value {
+            font-size: 14px;
+            font-weight: 600;
+            font-family: var(--font-mono);
+            color: var(--color-text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="container">
+        <header class="header">
+            <div class="header-left">
+                <a href="../index.html" class="header-logo">
+                    <div class="logo-icon">CP</div>
+                    <div class="logo-text">
+                        <span class="logo-brand">Coinpaprika</span>
+                        <span class="logo-product">RWA Portfolio Engine</span>
+                    </div>
+                </a>
+            </div>
+            <div class="header-search">
+                <input type="text" placeholder="Search RWA tokens, portfolios, analytics...">
+            </div>
+            <div class="header-right">
+                <div class="header-stat">
+                    <span class="header-stat-label">Portfolio Value</span>
+                    <span class="header-stat-value">$10.24M</span>
+                </div>
+                <div class="status-badge">
+                    <div class="status-dot"></div>
+                    <span class="status-text">LIVE</span>
+                </div>
+                <div class="user-avatar">JS</div>
+            </div>
+        </header>
+
+        <nav class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Portfolio</div>
+                <a href="../index.html" class="sidebar-item"><span class="sidebar-item-icon">📊</span>Dashboard</a>
+                <a href="holdings.html" class="sidebar-item"><span class="sidebar-item-icon">💼</span>My Holdings</a>
+                <a href="allocations.html" class="sidebar-item"><span class="sidebar-item-icon">📈</span>Allocations</a>
+                <a href="performance.html" class="sidebar-item active"><span class="sidebar-item-icon">⚡</span>Performance</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Analysis</div>
+                <a href="rwa-universe.html" class="sidebar-item"><span class="sidebar-item-icon">🏛️</span>RWA Universe</a>
+                <a href="yield.html" class="sidebar-item"><span class="sidebar-item-icon">💰</span>Yield Compare</a>
+                <a href="settlement.html" class="sidebar-item"><span class="sidebar-item-icon">🔄</span>Settlement</a>
+                <a href="risk.html" class="sidebar-item"><span class="sidebar-item-icon">🛡️</span>Risk Dashboard</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Execution</div>
+                <a href="rebalance.html" class="sidebar-item"><span class="sidebar-item-icon">⚖️</span>Rebalance<span class="sidebar-badge">1</span></a>
+                <a href="orders.html" class="sidebar-item"><span class="sidebar-item-icon">📋</span>Orders</a>
+                <a href="compliance.html" class="sidebar-item"><span class="sidebar-item-icon">✅</span>Compliance</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">System</div>
+                <a href="settings.html" class="sidebar-item"><span class="sidebar-item-icon">⚙️</span>Settings</a>
+                <a href="alerts.html" class="sidebar-item"><span class="sidebar-item-icon">🔔</span>Alerts<span class="sidebar-badge">3</span></a>
+                <a href="history.html" class="sidebar-item"><span class="sidebar-item-icon">📜</span>History</a>
+            </div>
+            <div class="sidebar-footer">
+                <div class="ai-status">
+                    <div class="ai-status-header">
+                        <span class="ai-status-icon">🤖</span>
+                        <span class="ai-status-title">AI Engine Active</span>
+                    </div>
+                    <div class="ai-status-text">Analyzing performance attribution...</div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">
+                    <span class="page-title-icon">⚡</span>
+                    Performance Analytics
+                </h1>
+                <p class="page-subtitle">Track your portfolio performance with detailed metrics and attribution analysis</p>
+            </div>
+
+            <div class="performance-metrics fade-in">
+                <div class="metric-card positive">
+                    <div class="metric-icon">📈</div>
+                    <div class="metric-value" style="color: var(--color-success);">+13.3%</div>
+                    <div class="metric-label">YTD Return</div>
+                    <div class="metric-comparison">
+                        <span class="value-up">+5.1%</span>
+                        <span class="metric-vs">vs benchmark</span>
+                    </div>
+                </div>
+                <div class="metric-card positive">
+                    <div class="metric-icon">💰</div>
+                    <div class="metric-value" style="color: var(--color-success);">+$1.2M</div>
+                    <div class="metric-label">Absolute Return</div>
+                    <div class="metric-comparison">
+                        <span class="value-up">+$412K</span>
+                        <span class="metric-vs">above target</span>
+                    </div>
+                </div>
+                <div class="metric-card neutral">
+                    <div class="metric-icon">⚖️</div>
+                    <div class="metric-value" style="color: var(--color-accent);">1.42</div>
+                    <div class="metric-label">Sharpe Ratio</div>
+                    <div class="metric-comparison">
+                        <span class="badge badge-success">Excellent</span>
+                    </div>
+                </div>
+                <div class="metric-card neutral">
+                    <div class="metric-icon">📊</div>
+                    <div class="metric-value" style="color: var(--color-accent);">2.8%</div>
+                    <div class="metric-label">Volatility</div>
+                    <div class="metric-comparison">
+                        <span class="badge badge-success">Low Risk</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="performance-chart fade-in" style="animation-delay: 0.1s;">
+                <div class="chart-header">
+                    <div class="chart-title">Portfolio Value Over Time</div>
+                    <div class="chart-controls">
+                        <button class="chart-btn">1W</button>
+                        <button class="chart-btn">1M</button>
+                        <button class="chart-btn active">3M</button>
+                        <button class="chart-btn">YTD</button>
+                        <button class="chart-btn">1Y</button>
+                        <button class="chart-btn">ALL</button>
+                    </div>
+                </div>
+                <div class="line-chart">
+                    <div class="chart-grid">
+                        <div class="chart-grid-line"><span class="chart-grid-label">$11M</span></div>
+                        <div class="chart-grid-line"><span class="chart-grid-label">$10.5M</span></div>
+                        <div class="chart-grid-line"><span class="chart-grid-label">$10M</span></div>
+                        <div class="chart-grid-line"><span class="chart-grid-label">$9.5M</span></div>
+                        <div class="chart-grid-line"><span class="chart-grid-label">$9M</span></div>
+                    </div>
+                    <div class="chart-line-container">
+                        <svg class="chart-svg" viewBox="0 0 800 200" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" style="stop-color:rgba(0, 212, 170, 0.3)"/>
+                                    <stop offset="100%" style="stop-color:rgba(0, 212, 170, 0)"/>
+                                </linearGradient>
+                            </defs>
+                            <path class="chart-area" d="M0,180 L50,170 L100,165 L150,160 L200,155 L250,145 L300,140 L350,130 L400,125 L450,115 L500,100 L550,90 L600,75 L650,65 L700,55 L750,45 L800,30 L800,200 L0,200 Z"/>
+                            <path class="chart-path" d="M0,180 L50,170 L100,165 L150,160 L200,155 L250,145 L300,140 L350,130 L400,125 L450,115 L500,100 L550,90 L600,75 L650,65 L700,55 L750,45 L800,30"/>
+                        </svg>
+                    </div>
+                    <div class="chart-x-axis">
+                        <span class="chart-x-label">Sep 1</span>
+                        <span class="chart-x-label">Sep 15</span>
+                        <span class="chart-x-label">Oct 1</span>
+                        <span class="chart-x-label">Oct 15</span>
+                        <span class="chart-x-label">Nov 1</span>
+                        <span class="chart-x-label">Nov 15</span>
+                        <span class="chart-x-label">Dec 1</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="attribution-table fade-in" style="animation-delay: 0.2s;">
+                <div class="attribution-header">
+                    <div class="attribution-title">Return Attribution (YTD)</div>
+                    <span class="badge badge-success">+13.3% Total</span>
+                </div>
+                <div class="waterfall-chart">
+                    <div class="waterfall-bar">
+                        <div class="waterfall-value" style="color: var(--color-success);">+4.2%</div>
+                        <div class="waterfall-block positive" style="height: 120px;"></div>
+                        <div class="waterfall-label">OUSG<br>Yield</div>
+                    </div>
+                    <div class="waterfall-bar">
+                        <div class="waterfall-value" style="color: var(--color-success);">+3.8%</div>
+                        <div class="waterfall-block positive" style="height: 108px;"></div>
+                        <div class="waterfall-label">FOBXX<br>Yield</div>
+                    </div>
+                    <div class="waterfall-bar">
+                        <div class="waterfall-value" style="color: var(--color-success);">+2.1%</div>
+                        <div class="waterfall-block positive" style="height: 60px;"></div>
+                        <div class="waterfall-label">USDY<br>Yield</div>
+                    </div>
+                    <div class="waterfall-bar">
+                        <div class="waterfall-value" style="color: var(--color-success);">+1.8%</div>
+                        <div class="waterfall-block positive" style="height: 52px;"></div>
+                        <div class="waterfall-label">LEND<br>Yield</div>
+                    </div>
+                    <div class="waterfall-bar">
+                        <div class="waterfall-value" style="color: var(--color-success);">+2.0%</div>
+                        <div class="waterfall-block positive" style="height: 58px;"></div>
+                        <div class="waterfall-label">Price<br>Appreciation</div>
+                    </div>
+                    <div class="waterfall-bar">
+                        <div class="waterfall-value" style="color: var(--color-danger);">-0.6%</div>
+                        <div class="waterfall-block negative" style="height: 18px;"></div>
+                        <div class="waterfall-label">REAL:NY<br>Loss</div>
+                    </div>
+                    <div class="waterfall-bar">
+                        <div class="waterfall-value" style="color: var(--color-accent);">+13.3%</div>
+                        <div class="waterfall-block total" style="height: 180px;"></div>
+                        <div class="waterfall-label">Total<br>Return</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="period-comparison fade-in" style="animation-delay: 0.3s;">
+                <div class="period-card">
+                    <div class="period-header">
+                        <div class="period-title">30-Day Performance</div>
+                        <div class="period-return" style="color: var(--color-success);">+0.42%</div>
+                    </div>
+                    <div class="period-stats">
+                        <div class="period-stat">
+                            <div class="period-stat-label">Absolute Return</div>
+                            <div class="period-stat-value" style="color: var(--color-success);">+$42,840</div>
+                        </div>
+                        <div class="period-stat">
+                            <div class="period-stat-label">Daily Avg</div>
+                            <div class="period-stat-value">+$1,428</div>
+                        </div>
+                        <div class="period-stat">
+                            <div class="period-stat-label">Best Day</div>
+                            <div class="period-stat-value" style="color: var(--color-success);">+$8,420</div>
+                        </div>
+                        <div class="period-stat">
+                            <div class="period-stat-label">Worst Day</div>
+                            <div class="period-stat-value" style="color: var(--color-danger);">-$2,150</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="period-card">
+                    <div class="period-header">
+                        <div class="period-title">vs Benchmark (RWA Index)</div>
+                        <div class="period-return" style="color: var(--color-success);">+32bps</div>
+                    </div>
+                    <div class="period-stats">
+                        <div class="period-stat">
+                            <div class="period-stat-label">Portfolio Yield</div>
+                            <div class="period-stat-value" style="color: var(--color-accent);">5.12%</div>
+                        </div>
+                        <div class="period-stat">
+                            <div class="period-stat-label">Benchmark Yield</div>
+                            <div class="period-stat-value">4.80%</div>
+                        </div>
+                        <div class="period-stat">
+                            <div class="period-stat-label">Information Ratio</div>
+                            <div class="period-stat-value">0.85</div>
+                        </div>
+                        <div class="period-stat">
+                            <div class="period-stat-label">Tracking Error</div>
+                            <div class="period-stat-value">1.2%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Chart control interactions
+        document.querySelectorAll('.chart-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Animate waterfall bars
+        document.querySelectorAll('.waterfall-block').forEach((bar, i) => {
+            const height = bar.style.height;
+            bar.style.height = '0';
+            setTimeout(() => {
+                bar.style.transition = 'height 0.6s ease';
+                bar.style.height = height;
+            }, 200 + (i * 100));
+        });
+    </script>
+</body>
+</html>

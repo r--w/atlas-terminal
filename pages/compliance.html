@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compliance | Coinpaprika RWA Portfolio Engine</title>
+    <link rel="stylesheet" href="../shared.css">
+    <style>
+        .compliance-status {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .compliance-card {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-success);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .compliance-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--color-success) 0%, #059669 100%);
+        }
+
+        .compliance-icon {
+            font-size: 32px;
+            margin-bottom: 16px;
+        }
+
+        .compliance-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin-bottom: 8px;
+        }
+
+        .compliance-desc {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .compliance-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--color-success-dim);
+            border: 1px solid var(--color-success);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--color-success);
+        }
+
+        .checks-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .check-card {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 24px;
+        }
+
+        .check-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .check-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+
+        .check-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--color-bg-card);
+            border-radius: var(--radius-sm);
+        }
+
+        .check-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .check-icon.pass {
+            background: var(--color-success-dim);
+            color: var(--color-success);
+        }
+
+        .check-icon.warning {
+            background: var(--color-warning-dim);
+            color: var(--color-warning);
+        }
+
+        .check-info {
+            flex: 1;
+        }
+
+        .check-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--color-text-primary);
+        }
+
+        .check-detail {
+            font-size: 11px;
+            color: var(--color-text-muted);
+        }
+
+        .check-status {
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .check-status.pass { color: var(--color-success); }
+        .check-status.warning { color: var(--color-warning); }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="container">
+        <header class="header">
+            <div class="header-left">
+                <a href="../index.html" class="header-logo">
+                    <div class="logo-icon">CP</div>
+                    <div class="logo-text">
+                        <span class="logo-brand">Coinpaprika</span>
+                        <span class="logo-product">RWA Portfolio Engine</span>
+                    </div>
+                </a>
+            </div>
+            <div class="header-search">
+                <input type="text" placeholder="Search RWA tokens, portfolios, analytics...">
+            </div>
+            <div class="header-right">
+                <div class="header-stat">
+                    <span class="header-stat-label">Portfolio Value</span>
+                    <span class="header-stat-value">$10.24M</span>
+                </div>
+                <div class="status-badge">
+                    <div class="status-dot"></div>
+                    <span class="status-text">LIVE</span>
+                </div>
+                <div class="user-avatar">JS</div>
+            </div>
+        </header>
+
+        <nav class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Portfolio</div>
+                <a href="../index.html" class="sidebar-item"><span class="sidebar-item-icon">📊</span>Dashboard</a>
+                <a href="holdings.html" class="sidebar-item"><span class="sidebar-item-icon">💼</span>My Holdings</a>
+                <a href="allocations.html" class="sidebar-item"><span class="sidebar-item-icon">📈</span>Allocations</a>
+                <a href="performance.html" class="sidebar-item"><span class="sidebar-item-icon">⚡</span>Performance</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Analysis</div>
+                <a href="rwa-universe.html" class="sidebar-item"><span class="sidebar-item-icon">🏛️</span>RWA Universe</a>
+                <a href="yield.html" class="sidebar-item"><span class="sidebar-item-icon">💰</span>Yield Compare</a>
+                <a href="settlement.html" class="sidebar-item"><span class="sidebar-item-icon">🔄</span>Settlement</a>
+                <a href="risk.html" class="sidebar-item"><span class="sidebar-item-icon">🛡️</span>Risk Dashboard</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Execution</div>
+                <a href="rebalance.html" class="sidebar-item"><span class="sidebar-item-icon">⚖️</span>Rebalance<span class="sidebar-badge">1</span></a>
+                <a href="orders.html" class="sidebar-item"><span class="sidebar-item-icon">📋</span>Orders</a>
+                <a href="compliance.html" class="sidebar-item active"><span class="sidebar-item-icon">✅</span>Compliance</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">System</div>
+                <a href="settings.html" class="sidebar-item"><span class="sidebar-item-icon">⚙️</span>Settings</a>
+                <a href="alerts.html" class="sidebar-item"><span class="sidebar-item-icon">🔔</span>Alerts<span class="sidebar-badge">3</span></a>
+                <a href="history.html" class="sidebar-item"><span class="sidebar-item-icon">📜</span>History</a>
+            </div>
+            <div class="sidebar-footer">
+                <div class="ai-status">
+                    <div class="ai-status-header">
+                        <span class="ai-status-icon">🤖</span>
+                        <span class="ai-status-title">AI Engine Active</span>
+                    </div>
+                    <div class="ai-status-text">Compliance monitoring active</div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">
+                    <span class="page-title-icon">✅</span>
+                    Compliance & Regulatory Status
+                </h1>
+                <p class="page-subtitle">Monitor regulatory compliance across all holdings and jurisdictions</p>
+            </div>
+
+            <div class="compliance-status fade-in">
+                <div class="compliance-card">
+                    <div class="compliance-icon">🇪🇺</div>
+                    <div class="compliance-title">MiCA Compliant</div>
+                    <div class="compliance-desc">All holdings approved under EU Markets in Crypto-Assets Regulation</div>
+                    <div class="compliance-badge">✓ Fully Compliant</div>
+                </div>
+                <div class="compliance-card">
+                    <div class="compliance-icon">🏛️</div>
+                    <div class="compliance-title">Accreditation Verified</div>
+                    <div class="compliance-desc">Investor accreditation status confirmed and up to date</div>
+                    <div class="compliance-badge">✓ Verified Nov 1, 2025</div>
+                </div>
+                <div class="compliance-card">
+                    <div class="compliance-icon">🔐</div>
+                    <div class="compliance-title">Custody Verified</div>
+                    <div class="compliance-desc">All assets held in compliant institutional custody solutions</div>
+                    <div class="compliance-badge">✓ Audit Trail Complete</div>
+                </div>
+            </div>
+
+            <div class="checks-grid fade-in" style="animation-delay: 0.1s;">
+                <div class="check-card">
+                    <div class="check-header">
+                        <div class="check-title">AML/KYC Checks</div>
+                        <span class="badge badge-success">All Passed</span>
+                    </div>
+                    <div class="check-list">
+                        <div class="check-item">
+                            <div class="check-icon pass">✓</div>
+                            <div class="check-info">
+                                <div class="check-name">Identity Verification</div>
+                                <div class="check-detail">Last verified: Dec 1, 2025</div>
+                            </div>
+                            <span class="check-status pass">Passed</span>
+                        </div>
+                        <div class="check-item">
+                            <div class="check-icon pass">✓</div>
+                            <div class="check-info">
+                                <div class="check-name">Source of Funds</div>
+                                <div class="check-detail">Documentation complete</div>
+                            </div>
+                            <span class="check-status pass">Passed</span>
+                        </div>
+                        <div class="check-item">
+                            <div class="check-icon pass">✓</div>
+                            <div class="check-info">
+                                <div class="check-name">Transaction Monitoring</div>
+                                <div class="check-detail">Real-time monitoring active</div>
+                            </div>
+                            <span class="check-status pass">Active</span>
+                        </div>
+                        <div class="check-item">
+                            <div class="check-icon pass">✓</div>
+                            <div class="check-info">
+                                <div class="check-name">Beneficial Ownership</div>
+                                <div class="check-detail">UBO registry updated</div>
+                            </div>
+                            <span class="check-status pass">Passed</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="check-card">
+                    <div class="check-header">
+                        <div class="check-title">Sanctions Screening</div>
+                        <span class="badge badge-success">Clear</span>
+                    </div>
+                    <div class="check-list">
+                        <div class="check-item">
+                            <div class="check-icon pass">✓</div>
+                            <div class="check-info">
+                                <div class="check-name">OFAC SDN List</div>
+                                <div class="check-detail">No matches found</div>
+                            </div>
+                            <span class="check-status pass">Clear</span>
+                        </div>
+                        <div class="check-item">
+                            <div class="check-icon pass">✓</div>
+                            <div class="check-info">
+                                <div class="check-name">EU Sanctions List</div>
+                                <div class="check-detail">No matches found</div>
+                            </div>
+                            <span class="check-status pass">Clear</span>
+                        </div>
+                        <div class="check-item">
+                            <div class="check-icon pass">✓</div>
+                            <div class="check-info">
+                                <div class="check-name">UN Consolidated List</div>
+                                <div class="check-detail">No matches found</div>
+                            </div>
+                            <span class="check-status pass">Clear</span>
+                        </div>
+                        <div class="check-item">
+                            <div class="check-icon pass">✓</div>
+                            <div class="check-info">
+                                <div class="check-name">PEP Screening</div>
+                                <div class="check-detail">No flags detected</div>
+                            </div>
+                            <span class="check-status pass">Clear</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="check-card">
+                    <div class="check-header">
+                        <div class="check-title">Investment Constraints</div>
+                        <span class="badge badge-warning">1 Warning</span>
+                    </div>
+                    <div class="check-list">
+                        <div class="check-item">
+                            <div class="check-icon pass">✓</div>
+                            <div class="check-info">
+                                <div class="check-name">Min Credit Rating (AA)</div>
+                                <div class="check-detail">83% compliant</div>
+                            </div>
+                            <span class="check-status pass">Passed</span>
+                        </div>
+                        <div class="check-item">
+                            <div class="check-icon warning">!</div>
+                            <div class="check-info">
+                                <div class="check-name">Max Single Issuer (25%)</div>
+                                <div class="check-detail">OUSG at 26% - review needed</div>
+                            </div>
+                            <span class="check-status warning">Warning</span>
+                        </div>
+                        <div class="check-item">
+                            <div class="check-icon pass">✓</div>
+                            <div class="check-info">
+                                <div class="check-name">Liquidity Requirement</div>
+                                <div class="check-detail">65% highly liquid</div>
+                            </div>
+                            <span class="check-status pass">Passed</span>
+                        </div>
+                        <div class="check-item">
+                            <div class="check-icon pass">✓</div>
+                            <div class="check-info">
+                                <div class="check-name">Settlement Speed (&lt;24h)</div>
+                                <div class="check-detail">Avg: 2h 52m</div>
+                            </div>
+                            <span class="check-status pass">Passed</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="check-card">
+                    <div class="check-header">
+                        <div class="check-title">Jurisdiction Restrictions</div>
+                        <span class="badge badge-success">All Clear</span>
+                    </div>
+                    <div class="check-list">
+                        <div class="check-item">
+                            <div class="check-icon pass">✓</div>
+                            <div class="check-info">
+                                <div class="check-name">US Accredited Investor</div>
+                                <div class="check-detail">Status verified</div>
+                            </div>
+                            <span class="check-status pass">Eligible</span>
+                        </div>
+                        <div class="check-item">
+                            <div class="check-icon pass">✓</div>
+                            <div class="check-info">
+                                <div class="check-name">EU MiFID II Classification</div>
+                                <div class="check-detail">Professional Investor</div>
+                            </div>
+                            <span class="check-status pass">Eligible</span>
+                        </div>
+                        <div class="check-item">
+                            <div class="check-icon pass">✓</div>
+                            <div class="check-info">
+                                <div class="check-name">Restricted Jurisdictions</div>
+                                <div class="check-detail">No exposure detected</div>
+                            </div>
+                            <span class="check-status pass">Clear</span>
+                        </div>
+                        <div class="check-item">
+                            <div class="check-icon pass">✓</div>
+                            <div class="check-info">
+                                <div class="check-name">Tax Reporting (FATCA/CRS)</div>
+                                <div class="check-detail">Reports filed</div>
+                            </div>
+                            <span class="check-status pass">Compliant</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

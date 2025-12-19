@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risk Dashboard | Coinpaprika RWA Portfolio Engine</title>
+    <link rel="stylesheet" href="../shared.css">
+    <style>
+        .risk-overview {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .risk-score-card {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 32px;
+            text-align: center;
+        }
+
+        .risk-gauge {
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 24px;
+            position: relative;
+        }
+
+        .risk-gauge-bg {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(
+                var(--color-success) 0deg 144deg,
+                var(--color-warning) 144deg 252deg,
+                var(--color-danger) 252deg 360deg
+            );
+            opacity: 0.3;
+        }
+
+        .risk-gauge-fill {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            border-radius: 50%;
+            background: var(--color-bg-secondary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .risk-score-value {
+            font-size: 48px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            color: var(--color-success);
+        }
+
+        .risk-score-label {
+            font-size: 12px;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+        }
+
+        .risk-score-status {
+            margin-top: 16px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            background: var(--color-success-dim);
+            color: var(--color-success);
+        }
+
+        .risk-breakdown {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 24px;
+        }
+
+        .risk-breakdown-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin-bottom: 20px;
+        }
+
+        .risk-factor {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .risk-factor:last-child {
+            border-bottom: none;
+        }
+
+        .risk-factor-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .risk-factor-info {
+            flex: 1;
+        }
+
+        .risk-factor-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin-bottom: 4px;
+        }
+
+        .risk-factor-desc {
+            font-size: 11px;
+            color: var(--color-text-muted);
+        }
+
+        .risk-factor-bar {
+            width: 200px;
+        }
+
+        .risk-bar-track {
+            height: 8px;
+            background: var(--color-bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 4px;
+        }
+
+        .risk-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+
+        .risk-factor-score {
+            text-align: right;
+            font-size: 12px;
+            color: var(--color-text-secondary);
+        }
+
+        .risk-factor-status {
+            width: 80px;
+            text-align: right;
+        }
+
+        .credit-quality {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .credit-card {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 24px;
+        }
+
+        .credit-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin-bottom: 20px;
+        }
+
+        .credit-distribution {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .credit-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .credit-grade {
+            width: 60px;
+            font-size: 14px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+        }
+
+        .credit-bar {
+            flex: 1;
+            height: 24px;
+            background: var(--color-bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .credit-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding-left: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .credit-value {
+            width: 100px;
+            text-align: right;
+            font-size: 13px;
+            font-family: var(--font-mono);
+            color: var(--color-text-primary);
+        }
+
+        .liquidity-chart {
+            height: 200px;
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            padding-top: 20px;
+        }
+
+        .liquidity-bar {
+            flex: 1;
+            border-radius: 4px 4px 0 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: 8px;
+            font-size: 10px;
+            font-weight: 600;
+            color: white;
+            transition: all var(--transition-fast);
+            cursor: pointer;
+        }
+
+        .liquidity-bar:hover {
+            opacity: 0.8;
+            transform: scaleY(1.02);
+        }
+
+        .liquidity-label {
+            margin-top: 8px;
+            font-size: 10px;
+            color: var(--color-text-muted);
+            text-align: center;
+        }
+
+        .alerts-section {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+
+        .alerts-header {
+            padding: 20px 24px;
+            background: var(--color-bg-tertiary);
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .alerts-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+        }
+
+        .alert-item {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .alert-item:last-child {
+            border-bottom: none;
+        }
+
+        .alert-severity {
+            width: 4px;
+            height: 40px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .alert-severity.high { background: var(--color-danger); }
+        .alert-severity.medium { background: var(--color-warning); }
+        .alert-severity.low { background: var(--color-info); }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            margin-bottom: 4px;
+        }
+
+        .alert-desc {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .alert-meta {
+            font-size: 10px;
+            color: var(--color-text-muted);
+        }
+
+        .alert-action {
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="container">
+        <header class="header">
+            <div class="header-left">
+                <a href="../index.html" class="header-logo">
+                    <div class="logo-icon">CP</div>
+                    <div class="logo-text">
+                        <span class="logo-brand">Coinpaprika</span>
+                        <span class="logo-product">RWA Portfolio Engine</span>
+                    </div>
+                </a>
+            </div>
+            <div class="header-search">
+                <input type="text" placeholder="Search RWA tokens, portfolios, analytics...">
+            </div>
+            <div class="header-right">
+                <div class="header-stat">
+                    <span class="header-stat-label">Portfolio Value</span>
+                    <span class="header-stat-value">$10.24M</span>
+                </div>
+                <div class="status-badge">
+                    <div class="status-dot"></div>
+                    <span class="status-text">LIVE</span>
+                </div>
+                <div class="user-avatar">JS</div>
+            </div>
+        </header>
+
+        <nav class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Portfolio</div>
+                <a href="../index.html" class="sidebar-item"><span class="sidebar-item-icon">📊</span>Dashboard</a>
+                <a href="holdings.html" class="sidebar-item"><span class="sidebar-item-icon">💼</span>My Holdings</a>
+                <a href="allocations.html" class="sidebar-item"><span class="sidebar-item-icon">📈</span>Allocations</a>
+                <a href="performance.html" class="sidebar-item"><span class="sidebar-item-icon">⚡</span>Performance</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Analysis</div>
+                <a href="rwa-universe.html" class="sidebar-item"><span class="sidebar-item-icon">🏛️</span>RWA Universe</a>
+                <a href="yield.html" class="sidebar-item"><span class="sidebar-item-icon">💰</span>Yield Compare</a>
+                <a href="settlement.html" class="sidebar-item"><span class="sidebar-item-icon">🔄</span>Settlement</a>
+                <a href="risk.html" class="sidebar-item active"><span class="sidebar-item-icon">🛡️</span>Risk Dashboard</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Execution</div>
+                <a href="rebalance.html" class="sidebar-item"><span class="sidebar-item-icon">⚖️</span>Rebalance<span class="sidebar-badge">1</span></a>
+                <a href="orders.html" class="sidebar-item"><span class="sidebar-item-icon">📋</span>Orders</a>
+                <a href="compliance.html" class="sidebar-item"><span class="sidebar-item-icon">✅</span>Compliance</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">System</div>
+                <a href="settings.html" class="sidebar-item"><span class="sidebar-item-icon">⚙️</span>Settings</a>
+                <a href="alerts.html" class="sidebar-item"><span class="sidebar-item-icon">🔔</span>Alerts<span class="sidebar-badge">3</span></a>
+                <a href="history.html" class="sidebar-item"><span class="sidebar-item-icon">📜</span>History</a>
+            </div>
+            <div class="sidebar-footer">
+                <div class="ai-status">
+                    <div class="ai-status-header">
+                        <span class="ai-status-icon">🤖</span>
+                        <span class="ai-status-title">AI Engine Active</span>
+                    </div>
+                    <div class="ai-status-text">Analyzing risk factors...</div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">
+                    <span class="page-title-icon">🛡️</span>
+                    Risk Dashboard
+                </h1>
+                <p class="page-subtitle">Monitor portfolio risk metrics, credit quality, and liquidity exposure</p>
+            </div>
+
+            <div class="risk-overview fade-in">
+                <div class="risk-score-card">
+                    <div class="risk-gauge">
+                        <div class="risk-gauge-bg"></div>
+                        <div class="risk-gauge-fill">
+                            <div class="risk-score-value">4.2</div>
+                            <div class="risk-score-label">Risk Score</div>
+                        </div>
+                    </div>
+                    <div class="risk-score-status">Low Risk - Compliant</div>
+                </div>
+
+                <div class="risk-breakdown">
+                    <div class="risk-breakdown-title">Risk Factor Analysis</div>
+
+                    <div class="risk-factor">
+                        <div class="risk-factor-icon" style="background: var(--color-success-dim);">📊</div>
+                        <div class="risk-factor-info">
+                            <div class="risk-factor-name">Market Risk</div>
+                            <div class="risk-factor-desc">Exposure to price volatility and market movements</div>
+                        </div>
+                        <div class="risk-factor-bar">
+                            <div class="risk-bar-track">
+                                <div class="risk-bar-fill" style="width: 25%; background: var(--color-success);"></div>
+                            </div>
+                            <div class="risk-factor-score">2.5/10 - Low</div>
+                        </div>
+                        <div class="risk-factor-status">
+                            <span class="badge badge-success">Excellent</span>
+                        </div>
+                    </div>
+
+                    <div class="risk-factor">
+                        <div class="risk-factor-icon" style="background: var(--color-success-dim);">🏦</div>
+                        <div class="risk-factor-info">
+                            <div class="risk-factor-name">Credit Risk</div>
+                            <div class="risk-factor-desc">Exposure to issuer default or downgrade</div>
+                        </div>
+                        <div class="risk-factor-bar">
+                            <div class="risk-bar-track">
+                                <div class="risk-bar-fill" style="width: 30%; background: var(--color-success);"></div>
+                            </div>
+                            <div class="risk-factor-score">3.0/10 - Low</div>
+                        </div>
+                        <div class="risk-factor-status">
+                            <span class="badge badge-success">Good</span>
+                        </div>
+                    </div>
+
+                    <div class="risk-factor">
+                        <div class="risk-factor-icon" style="background: var(--color-warning-dim);">💧</div>
+                        <div class="risk-factor-info">
+                            <div class="risk-factor-name">Liquidity Risk</div>
+                            <div class="risk-factor-desc">Ability to exit positions without significant slippage</div>
+                        </div>
+                        <div class="risk-factor-bar">
+                            <div class="risk-bar-track">
+                                <div class="risk-bar-fill" style="width: 55%; background: var(--color-warning);"></div>
+                            </div>
+                            <div class="risk-factor-score">5.5/10 - Moderate</div>
+                        </div>
+                        <div class="risk-factor-status">
+                            <span class="badge badge-warning">Monitor</span>
+                        </div>
+                    </div>
+
+                    <div class="risk-factor">
+                        <div class="risk-factor-icon" style="background: var(--color-info-dim);">⏱️</div>
+                        <div class="risk-factor-info">
+                            <div class="risk-factor-name">Duration Risk</div>
+                            <div class="risk-factor-desc">Sensitivity to interest rate changes</div>
+                        </div>
+                        <div class="risk-factor-bar">
+                            <div class="risk-bar-track">
+                                <div class="risk-bar-fill" style="width: 40%; background: var(--color-info);"></div>
+                            </div>
+                            <div class="risk-factor-score">4.0/10 - Moderate</div>
+                        </div>
+                        <div class="risk-factor-status">
+                            <span class="badge badge-info">Acceptable</span>
+                        </div>
+                    </div>
+
+                    <div class="risk-factor">
+                        <div class="risk-factor-icon" style="background: var(--color-success-dim);">🔗</div>
+                        <div class="risk-factor-info">
+                            <div class="risk-factor-name">Smart Contract Risk</div>
+                            <div class="risk-factor-desc">Exposure to protocol vulnerabilities</div>
+                        </div>
+                        <div class="risk-factor-bar">
+                            <div class="risk-bar-track">
+                                <div class="risk-bar-fill" style="width: 20%; background: var(--color-success);"></div>
+                            </div>
+                            <div class="risk-factor-score">2.0/10 - Low</div>
+                        </div>
+                        <div class="risk-factor-status">
+                            <span class="badge badge-success">Excellent</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="credit-quality fade-in" style="animation-delay: 0.2s;">
+                <div class="credit-card">
+                    <div class="credit-title">Credit Quality Distribution</div>
+                    <div class="credit-distribution">
+                        <div class="credit-row">
+                            <div class="credit-grade" style="color: var(--color-success);">Aaa/AAA</div>
+                            <div class="credit-bar">
+                                <div class="credit-bar-fill" style="width: 55%; background: linear-gradient(90deg, #10b981, #059669);">55%</div>
+                            </div>
+                            <div class="credit-value">$5.63M</div>
+                        </div>
+                        <div class="credit-row">
+                            <div class="credit-grade" style="color: var(--color-info);">Aa/AA</div>
+                            <div class="credit-bar">
+                                <div class="credit-bar-fill" style="width: 28%; background: linear-gradient(90deg, #3b82f6, #2563eb);">28%</div>
+                            </div>
+                            <div class="credit-value">$2.87M</div>
+                        </div>
+                        <div class="credit-row">
+                            <div class="credit-grade" style="color: var(--color-warning);">A</div>
+                            <div class="credit-bar">
+                                <div class="credit-bar-fill" style="width: 13%; background: linear-gradient(90deg, #f59e0b, #d97706);">13%</div>
+                            </div>
+                            <div class="credit-value">$1.33M</div>
+                        </div>
+                        <div class="credit-row">
+                            <div class="credit-grade" style="color: var(--color-danger);">Baa/BBB</div>
+                            <div class="credit-bar">
+                                <div class="credit-bar-fill" style="width: 4%; background: linear-gradient(90deg, #ef4444, #dc2626);">4%</div>
+                            </div>
+                            <div class="credit-value">$0.41M</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="credit-card">
+                    <div class="credit-title">Liquidity by Asset</div>
+                    <div class="liquidity-chart">
+                        <div class="liquidity-bar" style="height: 90%; background: linear-gradient(180deg, #10b981, #059669);">
+                            90%
+                            <span class="liquidity-label">OUSG</span>
+                        </div>
+                        <div class="liquidity-bar" style="height: 85%; background: linear-gradient(180deg, #3b82f6, #2563eb);">
+                            85%
+                            <span class="liquidity-label">FOBXX</span>
+                        </div>
+                        <div class="liquidity-bar" style="height: 70%; background: linear-gradient(180deg, #f59e0b, #d97706);">
+                            70%
+                            <span class="liquidity-label">USDY</span>
+                        </div>
+                        <div class="liquidity-bar" style="height: 60%; background: linear-gradient(180deg, #8b5cf6, #7c3aed);">
+                            60%
+                            <span class="liquidity-label">LEND</span>
+                        </div>
+                        <div class="liquidity-bar" style="height: 35%; background: linear-gradient(180deg, #ef4444, #dc2626);">
+                            35%
+                            <span class="liquidity-label">REAL:NY</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alerts-section fade-in" style="animation-delay: 0.3s;">
+                <div class="alerts-header">
+                    <div class="alerts-title">Active Risk Alerts</div>
+                    <span class="badge badge-danger">3 active</span>
+                </div>
+                <div class="alert-item">
+                    <div class="alert-severity high"></div>
+                    <div class="alert-content">
+                        <div class="alert-title-text">REAL:NY Liquidity Declining</div>
+                        <div class="alert-desc">Liquidity score dropped from 52% to 35% over the past 7 days. Large order slippage risk increased to 68%.</div>
+                        <div class="alert-meta">Detected 2 hours ago • Affects $1.21M position</div>
+                    </div>
+                    <div class="alert-action">
+                        <button class="btn btn-sm">Review Position</button>
+                    </div>
+                </div>
+                <div class="alert-item">
+                    <div class="alert-severity medium"></div>
+                    <div class="alert-content">
+                        <div class="alert-title-text">Allocation Drift Detected</div>
+                        <div class="alert-desc">Corporate bonds allocation drifted +6% above target. Treasury funds -5% below target.</div>
+                        <div class="alert-meta">Detected 6 hours ago • Rebalance recommended</div>
+                    </div>
+                    <div class="alert-action">
+                        <button class="btn btn-sm btn-secondary">View Rebalance</button>
+                    </div>
+                </div>
+                <div class="alert-item">
+                    <div class="alert-severity low"></div>
+                    <div class="alert-content">
+                        <div class="alert-title-text">USDY Credit Spread Widening</div>
+                        <div class="alert-desc">Credit spread increased 15bps over the past 5 days. Monitor for potential downgrade risk.</div>
+                        <div class="alert-meta">Detected 1 day ago • Monitor situation</div>
+                    </div>
+                    <div class="alert-action">
+                        <button class="btn btn-sm btn-secondary">Dismiss</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
