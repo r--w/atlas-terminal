@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head><style>
+html { background: #0a1628; }
+body {
+  width: 720pt; height: 405pt; margin: 0; padding: 0;
+  background: #0a1628; font-family: Arial, sans-serif; display: flex;
+}
+.slide { margin: 35pt 45pt; flex: 1; display: flex; flex-direction: column; }
+h1 { color: #10b981; font-size: 32pt; font-weight: bold; margin: 0 0 5pt 0; }
+h2 { color: #f1f5f9; font-size: 15pt; margin: 0 0 15pt 0; font-weight: normal; }
+h3 { color: #10b981; font-size: 11pt; margin: 0 0 6pt 0; font-weight: bold; }
+p { color: #cbd5e1; font-size: 9pt; margin: 0 0 6pt 0; line-height: 1.2; }
+ul { list-style: none; padding: 0; margin: 0; }
+li { color: #cbd5e1; font-size: 8pt; padding: 2pt 0 2pt 12pt; position: relative; line-height: 1.1; }
+li::before { content: '▸'; position: absolute; left: 0; color: #10b981; font-size: 9pt; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15pt; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12pt; }
+.grid4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10pt; }
+.box { background: #1a2332; padding: 10pt; border-radius: 4pt; border-left: 2pt solid #fbbf24; }
+.center { text-align: center; justify-content: center; align-items: center; }
+.metric { background: #1a2332; padding: 8pt; border: 2pt solid #fbbf24; border-radius: 4pt; text-align: center; }
+.val { font-size: 22pt; color: #fbbf24; font-weight: bold; margin: 2pt 0; }
+.label { font-size: 7pt; color: #94a3b8; text-transform: uppercase; margin: 0; }
+table { width: 100%; border-collapse: collapse; font-size: 8pt; }
+th { color: #10b981; font-weight: bold; padding: 6pt; text-align: left; border-bottom: 1pt solid #10b981; }
+td { color: #cbd5e1; padding: 6pt; border-bottom: 1pt solid rgba(16,185,129,0.2); }
+.hi { color: #10b981; font-weight: bold; }
+</style></head>
+<body><div class="slide ">
+<h1>ARCHITECTURE</h1>
+<h2 style="margin-bottom: 10pt;">Platform architecture</h2>
+<div style="display: flex; flex-direction: column-reverse; gap: 4pt; max-width: 500pt; margin: 0 auto;">
+  <div class="box" style="padding: 7pt;"><h3 style="margin-bottom: 3pt;">Data foundation</h3><p style="margin: 0;">Coinpaprika real-time multi-chain data</p></div>
+  <div class="box" style="padding: 7pt;"><h3 style="margin-bottom: 3pt;">Asset intelligence</h3><p style="margin: 0;">Ratings and asset insights</p></div>
+  <div class="box" style="padding: 7pt;"><h3 style="margin-bottom: 3pt;">Pricing layer</h3><p style="margin: 0;">Cross-chain aggregation</p></div>
+  <div class="box" style="padding: 7pt; border-color: #fbbf24; background: rgba(251,191,36,0.1);"><h3 style="color: #fbbf24; margin-bottom: 3pt;">AI engine</h3><p style="margin: 0;">Allocation recommendations</p></div>
+  <div class="box" style="padding: 7pt;"><h3 style="margin-bottom: 3pt;">Institutional UX</h3><p style="margin: 0;">Terminal-style interface</p></div>
+  <div class="box" style="padding: 7pt;"><h3 style="margin-bottom: 3pt;">Integrations</h3><p style="margin: 0;">Custody, trading, reporting</p></div>
+</div></div></body>
+</html>
